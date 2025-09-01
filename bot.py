@@ -1308,13 +1308,14 @@ async def rankings_command_from_callback(query, user_id: int) -> None:
 async def get_collection_price_from_callback(query, user_id: int, collection_slug: str) -> None:
     """
     Get collection price from callback button.
+    This function displays identical information to the /price command.
     """
     try:
         searching_message = get_text(user_id, 'price.searching', collection=collection_slug)
         await query.edit_message_text(searching_message)
         
-        # Fetch collection data
-        collection_data = await fetch_nftpf_project_by_slug(collection_slug)
+        # Search for collection data using the same method as /price command
+        collection_data = await search_nftpf_collection(collection_slug)
         
         if not collection_data:
             not_found_message = get_text(user_id, 'price.not_found', collection=collection_slug)
@@ -1323,24 +1324,93 @@ async def get_collection_price_from_callback(query, user_id: int, collection_slu
             await query.edit_message_text(not_found_message, reply_markup=reply_markup)
             return
         
-        # Format price information
-        name = collection_data.get('name', collection_slug)
-        floor_price = collection_data.get('floor_price', 0)
-        change_24h = collection_data.get('floor_price_change_24h', 0)
+        # Extract relevant information from the new API structure (same as /price command)
+        stats = collection_data.get('stats', {})
+        details = collection_data.get('details', {})
         
-        # Create external link (placeholder)
-        external_link = f"https://nftpricefloor.com/collection/{collection_slug}"
+        name = details.get('name', 'Unknown')
+        slug = details.get('slug', '')
+        ranking = details.get('ranking', 0)
         
-        price_message = get_text(user_id, 'price.floor_price',
-                               name=name,
-                               price=f"{floor_price:.3f}" if floor_price else "N/A",
-                               change=f"{change_24h:+.2f}" if change_24h else "N/A",
-                               link=external_link)
+        # Floor price information
+        floor_info = stats.get('floorInfo', {})
+        floor_price_eth = floor_info.get('currentFloorNative', 0)
+        floor_price_usd = floor_info.get('currentFloorUsd', 0)
+        
+        # Supply and other stats
+        total_supply = stats.get('totalSupply', 0)
+        listed_count = stats.get('listedCount', 0)
+        total_owners = stats.get('totalOwners', 0)
+        
+        # 24h price changes
+        floor_temp_native = stats.get('floorTemporalityNative', {})
+        floor_temp_usd = stats.get('floorTemporalityUsd', {})
+        price_change_24h_native = floor_temp_native.get('diff24h', 0)
+        price_change_24h_usd = floor_temp_usd.get('diff24h', 0)
+        
+        # 24h volume and sales
+        sales_temp_native = stats.get('salesTemporalityNative', {})
+        volume_24h = sales_temp_native.get('volume', {}).get('val24h', 0)
+        sales_24h = sales_temp_native.get('count', {}).get('val24h', 0)
+        
+        # Create hyperlink for collection name
+        collection_link = f"[{name}](https://nftpricefloor.com/{slug}?=tbot)" if slug else name
+        
+        # Format the response (identical to /price command)
+        response_text = f"📊 **{collection_link}**\n"
+        if ranking:
+            response_text += f"🏆 **Rank:** #{ranking}\n"
+        response_text += "\n"
+        
+        # Floor price in ETH and USD
+        if floor_price_eth:
+            floor_eth = f"{floor_price_eth:.3f} ETH"
+            floor_usd = f"${floor_price_usd:,.0f}" if floor_price_usd else "N/A"
+            response_text += f"🏠 **Floor Price:** {floor_eth} ({floor_usd})\n"
+        
+        # 24h price change with dynamic visual indicators
+        if price_change_24h_native:
+            sign_native = "+" if price_change_24h_native >= 0 else ""
+            sign_usd = "+" if price_change_24h_usd >= 0 else ""
+            
+            # Dynamic emoji based on change percentage
+            if price_change_24h_native > 15:
+                change_emoji = "🚀"  # Strong positive
+            elif price_change_24h_native > 5:
+                change_emoji = "📈"  # Positive
+            elif price_change_24h_native > 0:
+                change_emoji = "📊"  # Slight positive
+            elif price_change_24h_native > -5:
+                change_emoji = "📉"  # Slight negative
+            elif price_change_24h_native > -15:
+                change_emoji = "⬇️"  # Negative
+            else:
+                change_emoji = "💥"  # Strong negative
+                
+            response_text += f"{change_emoji} **24h Change:** {sign_native}{price_change_24h_native:.1f}% {sign_usd}${price_change_24h_usd:.0f}\n"
+        
+        # 24h volume and sales
+        if volume_24h:
+            if volume_24h >= 1000:
+                volume_str = f"{volume_24h/1000:.1f}K ETH"
+            else:
+                volume_str = f"{volume_24h:.2f} ETH"
+            response_text += f"💰 **24h Volume:** {volume_str} ({sales_24h} sales)\n"
+        
+        # Supply and ownership info
+        if total_supply:
+            response_text += f"📦 **Total Supply:** {total_supply:,}\n"
+        if listed_count:
+            response_text += f"🏪 **Listed:** {listed_count:,}\n"
+        if total_owners:
+            response_text += f"👥 **Owners:** {total_owners:,}\n"
+        
+        response_text += "\n🔄 *Data from NFTPriceFloor API*"
         
         keyboard = [
             [
                 InlineKeyboardButton("🔔 Set Alert", callback_data=f'alert_{collection_slug}'),
-                InlineKeyboardButton("🔗 View Details", url=external_link)
+                InlineKeyboardButton("🔗 View Details", url=f"https://nftpricefloor.com/{slug}?=tbot")
             ],
             [
                 InlineKeyboardButton(get_text(user_id, 'common.back'), callback_data='back_to_popular')
@@ -1348,7 +1418,9 @@ async def get_collection_price_from_callback(query, user_id: int, collection_slu
         ]
         
         reply_markup = InlineKeyboardMarkup(keyboard)
-        await query.edit_message_text(price_message, reply_markup=reply_markup, parse_mode='Markdown')
+        await query.edit_message_text(response_text, reply_markup=reply_markup, parse_mode='Markdown')
+        
+        logger.info(f"Price callback used for collection '{collection_slug}' by user {user_id}")
         
     except Exception as e:
         logger.error(f"Error in get_collection_price_from_callback: {e}")
