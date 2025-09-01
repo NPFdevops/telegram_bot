@@ -1,0 +1,87 @@
+{
+  "welcome": {
+    "greeting": "🤖 你好 {name}！\n\n欢迎使用NFT市场洞察机器人！我在这里帮助您跟踪NFT收藏品、设置价格提醒并及时了解最新的市场趋势。\n\n使用 /help 查看可用命令。",
+    "language_set": "语言已设置为中文 🇨🇳"
+  },
+  "help": {
+    "title": "📋 **可用命令：**\n\n",
+    "commands": {
+      "start": "/start - 欢迎消息和机器人介绍",
+      "help": "/help - 显示此帮助消息",
+      "price": "/price <收藏品> - 获取NFT收藏品地板价",
+      "rankings": "/rankings - 查看按交易量排名的顶级NFT收藏品",
+      "alerts": "/alerts - 管理价格提醒",
+      "language": "/language - 更改机器人语言"
+    },
+    "usage": "\n🔧 **使用方法：**\n只需输入上述任何命令即可与机器人互动。\n\n如果遇到任何问题，请重试或联系支持。"
+  },
+  "price": {
+    "usage": "请提供收藏品名称。用法：/price <收藏品名称>",
+    "searching": "🔍 正在搜索收藏品：{collection}...",
+    "not_found": "❌ 未找到收藏品 '{collection}'。请检查拼写并重试。",
+    "error": "⚠️ 获取价格数据时出错。请稍后重试。",
+    "floor_price": "💎 **{name}**\n\n💰 地板价：**{price} ETH**\n📊 24小时变化：**{change}%**\n🔗 [查看详情]({link})"
+  },
+  "rankings": {
+    "title": "🏆 **顶级NFT收藏品**\n\n",
+    "title_next": "🏆 **顶级NFT收藏品 - 接下来10个**\n\n",
+    "loading": "📊 正在加载顶级NFT收藏品...",
+    "loading_next": "📊 正在加载接下来10个NFT收藏品...",
+    "error": "⚠️ 获取排名数据时出错。请稍后重试。",
+    "no_data": "❌ 目前没有可用的排名数据。",
+    "no_more": "❌ 没有更多收藏品可用。",
+    "next_button": "➡️ 接下来10个收藏品",
+    "back_button": "⬅️ 返回前10名",
+    "footer": "🔄 *数据来自NFTPriceFloor API*",
+    "item": "{rank}. **{name}**\n   💰 地板价：{floor} ETH\n   📈 交易量：{volume} ETH\n",
+    "navigation": {
+      "previous": "⬅️ 上一页",
+      "next": "➡️ 下一页",
+      "page_info": "第 {current} 页，共 {total} 页"
+    }
+  },
+  "alerts": {
+    "help": "🔔 **NFT价格提醒**\n\n**命令：**\n`/alerts list` - 查看您的活跃提醒\n`/alerts add <收藏品> <价格>` - 添加价格提醒\n`/alerts remove <id>` - 按ID删除提醒\n\n**示例：**\n`/alerts add cryptopunks 50` - 当CryptoPunks地板价达到50 ETH时提醒\n`/alerts add bored-ape-yacht-club 30` - BAYC达到30 ETH时提醒\n\n💡 *提醒每小时检查一次价格*",
+    "list_empty": "📋 **您的活跃提醒**\n\n🔄 未找到活跃提醒。\n\n使用 `/alerts add <收藏品> <价格>` 创建您的第一个提醒！",
+    "add_usage": "❌ 请提供收藏品名称和目标价格。\n\n用法：`/alerts add <收藏品> <价格>`\n示例：`/alerts add cryptopunks 50`",
+    "invalid_price": "❌ 价格格式无效。请输入有效数字。\n\n示例：`/alerts add cryptopunks 50`",
+    "add_success": "✅ **提醒已创建！**\n\n📊 收藏品：{collection}\n💰 目标价格：{price} ETH\n\n🔔 当地板价达到您的目标时，您将收到通知。\n\n*注意：这是演示实现。完整的提醒功能即将推出！*",
+    "remove_usage": "❌ 请提供要删除的提醒ID。\n\n用法：`/alerts remove <id>`\n使用 `/alerts list` 查看您的提醒ID。",
+    "remove_success": "✅ **提醒已删除**\n\n🗑️ 提醒ID {alert_id} 已被删除。\n\n*注意：这是演示实现。完整的提醒功能即将推出！*",
+    "unknown_command": "❌ 未知的提醒命令。\n\n使用 `/alerts` 查看可用选项。",
+    "error": "❌ 抱歉，提醒功能出现问题。请稍后重试。",
+    "title": "🔔 **价格提醒管理**\n\n",
+    "no_alerts": "您没有活跃的价格提醒。\n\n要设置提醒，请使用：/alert <收藏品> <价格>",
+    "max_alerts": "❌ 您已达到10个提醒的最大限制。请在添加新提醒之前删除现有提醒。",
+    "usage": "用法：/alert <收藏品> <目标价格>\n示例：/alert cryptopunks 50",
+    "set_success": "✅ 已为 {collection} 设置 {price} ETH 的提醒",
+    "set_error": "❌ 设置提醒时出错。请重试。",
+    "list_header": "您的活跃提醒：\n\n",
+    "alert_item": "{index}. {collection} - {price} ETH\n",
+    "remove_usage_old": "要删除提醒，请使用：/remove_alert <编号>"
+  },
+  "language": {
+    "current": "当前语言：中文 🇨🇳",
+    "select": "请选择您的首选语言：",
+    "changed": "语言已更改为中文 🇨🇳",
+    "options": {
+      "en": "🇺🇸 English",
+      "es": "🇪🇸 Español",
+      "zh": "🇨🇳 中文"
+    }
+  },
+  "errors": {
+    "general": "⚠️ 发生意外错误。请稍后重试。",
+    "api_error": "⚠️ 服务暂时不可用。请稍后重试。",
+    "invalid_command": "❌ 无效命令。使用 /help 查看可用命令。"
+  },
+  "common": {
+    "loading": "加载中...",
+    "error": "错误",
+    "success": "成功",
+    "cancel": "取消",
+    "back": "返回",
+    "next": "下一个",
+    "previous": "上一个"
+  }
+}

@@ -1,0 +1,87 @@
+{
+  "welcome": {
+    "greeting": "🤖 ¡Hola {name}!\n\n¡Bienvenido al Bot de Información del Mercado NFT! Estoy aquí para ayudarte a rastrear colecciones NFT, configurar alertas de precios y mantenerte actualizado con las últimas tendencias del mercado.\n\nUsa /help para ver los comandos disponibles.",
+    "language_set": "Idioma configurado a Español 🇪🇸"
+  },
+  "help": {
+    "title": "📋 **Comandos Disponibles:**\n\n",
+    "commands": {
+      "start": "/start - Mensaje de bienvenida e introducción del bot",
+      "help": "/help - Mostrar este mensaje de ayuda",
+      "price": "/price <colección> - Obtener precio mínimo de colección NFT",
+      "rankings": "/rankings - Ver las mejores colecciones NFT por volumen",
+      "alerts": "/alerts - Gestionar alertas de precios",
+      "language": "/language - Cambiar idioma del bot"
+    },
+    "usage": "\n🔧 **Cómo usar:**\nSimplemente escribe cualquiera de los comandos anteriores para interactuar con el bot.\n\nSi encuentras algún problema, inténtalo de nuevo o contacta con soporte."
+  },
+  "price": {
+    "usage": "Por favor proporciona un nombre de colección. Uso: /price <nombre_colección>",
+    "searching": "🔍 Buscando colección: {collection}...",
+    "not_found": "❌ Colección '{collection}' no encontrada. Por favor verifica la ortografía e inténtalo de nuevo.",
+    "error": "⚠️ Error al obtener datos de precios. Por favor inténtalo más tarde.",
+    "floor_price": "💎 **{name}**\n\n💰 Precio Mínimo: **{price} ETH**\n📊 Cambio 24h: **{change}%**\n🔗 [Ver Detalles]({link})"
+  },
+  "rankings": {
+    "title": "🏆 **Mejores Colecciones NFT**\n\n",
+    "title_next": "🏆 **Mejores Colecciones NFT - Siguientes 10**\n\n",
+    "loading": "📊 Cargando mejores colecciones NFT...",
+    "loading_next": "📊 Cargando siguientes 10 colecciones NFT...",
+    "error": "⚠️ Error al obtener datos de rankings. Por favor inténtalo más tarde.",
+    "no_data": "❌ No hay datos de rankings disponibles en este momento.",
+    "no_more": "❌ No hay más colecciones disponibles.",
+    "next_button": "➡️ Siguientes 10 Colecciones",
+    "back_button": "⬅️ Volver al Top 10",
+    "footer": "🔄 *Datos de NFTPriceFloor API*",
+    "item": "{rank}. **{name}**\n   💰 Mínimo: {floor} ETH\n   📈 Volumen: {volume} ETH\n",
+    "navigation": {
+      "previous": "⬅️ Anterior",
+      "next": "➡️ Siguiente",
+      "page_info": "Página {current} de {total}"
+    }
+  },
+  "alerts": {
+    "help": "🔔 **Alertas de Precios NFT**\n\n**Comandos:**\n`/alerts list` - Ver tus alertas activas\n`/alerts add <colección> <precio>` - Agregar alerta de precio\n`/alerts remove <id>` - Eliminar alerta por ID\n\n**Ejemplos:**\n`/alerts add cryptopunks 50` - Alerta cuando CryptoPunks llegue a 50 ETH\n`/alerts add bored-ape-yacht-club 30` - Alerta para BAYC a 30 ETH\n\n💡 *Las alertas verifican precios cada hora*",
+    "list_empty": "📋 **Tus Alertas Activas**\n\n🔄 No se encontraron alertas activas.\n\n¡Usa `/alerts add <colección> <precio>` para crear tu primera alerta!",
+    "add_usage": "❌ Por favor proporciona el nombre de la colección y el precio objetivo.\n\nUso: `/alerts add <colección> <precio>`\nEjemplo: `/alerts add cryptopunks 50`",
+    "invalid_price": "❌ Formato de precio inválido. Por favor ingresa un número válido.\n\nEjemplo: `/alerts add cryptopunks 50`",
+    "add_success": "✅ **¡Alerta Creada!**\n\n📊 Colección: {collection}\n💰 Precio Objetivo: {price} ETH\n\n🔔 Serás notificado cuando el precio mínimo alcance tu objetivo.\n\n*Nota: Esta es una implementación de demostración. ¡La funcionalidad completa de alertas llegará pronto!*",
+    "remove_usage": "❌ Por favor proporciona el ID de la alerta a eliminar.\n\nUso: `/alerts remove <id>`\nUsa `/alerts list` para ver los IDs de tus alertas.",
+    "remove_success": "✅ **Alerta Eliminada**\n\n🗑️ La alerta ID {alert_id} ha sido eliminada.\n\n*Nota: Esta es una implementación de demostración. ¡La funcionalidad completa de alertas llegará pronto!*",
+    "unknown_command": "❌ Comando de alertas desconocido.\n\nUsa `/alerts` para ver las opciones disponibles.",
+    "error": "❌ Lo siento, algo salió mal con las alertas. Por favor inténtalo más tarde.",
+    "title": "🔔 **Gestión de Alertas de Precios**\n\n",
+    "no_alerts": "No tienes alertas de precios activas.\n\nPara configurar una alerta, usa: /alert <colección> <precio>",
+    "max_alerts": "❌ Has alcanzado el límite máximo de 10 alertas. Por favor elimina una alerta existente antes de agregar una nueva.",
+    "usage": "Uso: /alert <colección> <precio_objetivo>\nEjemplo: /alert cryptopunks 50",
+    "set_success": "✅ Alerta configurada para {collection} a {price} ETH",
+    "set_error": "❌ Error al configurar alerta. Por favor inténtalo de nuevo.",
+    "list_header": "Tus alertas activas:\n\n",
+    "alert_item": "{index}. {collection} - {price} ETH\n",
+    "remove_usage_old": "Para eliminar una alerta, usa: /remove_alert <número>"
+  },
+  "language": {
+    "current": "Idioma actual: Español 🇪🇸",
+    "select": "Por favor selecciona tu idioma preferido:",
+    "changed": "Idioma cambiado a Español 🇪🇸",
+    "options": {
+      "en": "🇺🇸 English",
+      "es": "🇪🇸 Español",
+      "zh": "🇨🇳 中文"
+    }
+  },
+  "errors": {
+    "general": "⚠️ Ocurrió un error inesperado. Por favor inténtalo más tarde.",
+    "api_error": "⚠️ Servicio temporalmente no disponible. Por favor inténtalo más tarde.",
+    "invalid_command": "❌ Comando inválido. Usa /help para ver los comandos disponibles."
+  },
+  "common": {
+    "loading": "Cargando...",
+    "error": "Error",
+    "success": "Éxito",
+    "cancel": "Cancelar",
+    "back": "Atrás",
+    "next": "Siguiente",
+    "previous": "Anterior"
+  }
+}

@@ -16,6 +16,13 @@ import json
 from typing import Optional, Dict, Any
 import ssl
 
+# Import language utilities
+from language_utils import (
+    get_text, set_user_language, get_user_language, 
+    get_language_options_keyboard, detect_user_language_from_telegram,
+    SUPPORTED_LANGUAGES
+)
+
 # Configure logging
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -40,18 +47,22 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
     """
     try:
         user = update.effective_user
-        welcome_message = (
-            f"🤖 Hello {user.first_name}!\n\n"
-            "Welcome to this Telegram bot! I'm here to help you.\n\n"
-            "Use /help to see available commands."
-        )
+        
+        # Detect and set user language if not already set
+        current_lang = get_user_language(user.id)
+        if current_lang == 'en':  # Default language, try to detect
+            detected_lang = detect_user_language_from_telegram(user)
+            set_user_language(user.id, detected_lang)
+        
+        # Get welcome message in user's language
+        welcome_message = get_text(user.id, 'welcome.greeting', name=user.first_name)
+        
         await update.message.reply_text(welcome_message)
         logger.info(f"User {user.id} ({user.username}) started the bot")
     except Exception as e:
         logger.error(f"Error in start_command: {e}")
-        await update.message.reply_text(
-            "Sorry, something went wrong. Please try again later."
-        )
+        error_message = get_text(user.id, 'errors.general') if 'user' in locals() else "Sorry, something went wrong. Please try again later."
+        await update.message.reply_text(error_message)
 
 
 # NFT API Helper Functions
@@ -141,33 +152,26 @@ async def price_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
     Get NFT collection floor price and basic information.
     """
     try:
+        user = update.effective_user
+        
         # Check if collection name is provided
         if not context.args:
-            await update.message.reply_text(
-                "❌ Please provide a collection name.\n\n"
-                "Usage: `/price <collection_name>`\n\n"
-                "Example: `/price cryptopunks`",
-                parse_mode='Markdown'
-            )
+            usage_message = get_text(user.id, 'price.usage')
+            await update.message.reply_text(usage_message, parse_mode='Markdown')
             return
         
         collection_name = " ".join(context.args)
         
         # Send "searching" message
-        searching_msg = await update.message.reply_text(
-            f"🔍 Searching for **{collection_name}**...",
-            parse_mode='Markdown'
-        )
+        searching_text = get_text(user.id, 'price.searching', collection=collection_name)
+        searching_msg = await update.message.reply_text(searching_text, parse_mode='Markdown')
         
         # Search for collection data
         collection_data = await search_nftpf_collection(collection_name)
         
         if not collection_data:
-            await searching_msg.edit_text(
-                f"❌ Collection **{collection_name}** not found.\n"
-                "Please check the spelling and try again.",
-                parse_mode='Markdown'
-            )
+            not_found_text = get_text(user.id, 'price.not_found', collection=collection_name)
+            await searching_msg.edit_text(not_found_text, parse_mode='Markdown')
             return
         
         # Extract relevant information from the new API structure
@@ -244,9 +248,9 @@ async def price_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
     except Exception as e:
         logger.error(f"Error in price_command: {e}")
         try:
-            await update.message.reply_text(
-                "❌ Sorry, something went wrong while fetching NFT data. Please try again later."
-            )
+            user = update.effective_user
+            error_message = get_text(user.id, 'price.error')
+            await update.message.reply_text(error_message)
         except:
             pass
 
@@ -283,17 +287,7 @@ async def alerts_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         # Check if user provided arguments
         if not context.args:
             # Show help for alerts command
-            help_text = (
-                "🔔 **NFT Price Alerts**\n\n"
-                "**Commands:**\n"
-                "`/alerts list` - View your active alerts\n"
-                "`/alerts add <collection> <price>` - Add price alert\n"
-                "`/alerts remove <id>` - Remove alert by ID\n\n"
-                "**Examples:**\n"
-                "`/alerts add cryptopunks 50` - Alert when CryptoPunks floor hits 50 ETH\n"
-                "`/alerts add bored-ape-yacht-club 30` - Alert for BAYC at 30 ETH\n\n"
-                "💡 *Alerts check prices every hour*"
-            )
+            help_text = get_text(user_id, 'alerts.help')
             await update.message.reply_text(help_text, parse_mode='Markdown')
             return
         
@@ -301,78 +295,51 @@ async def alerts_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         
         if command == "list":
             # For now, show a placeholder message
-            response_text = (
-                "📋 **Your Active Alerts**\n\n"
-                "🔄 No active alerts found.\n\n"
-                "Use `/alerts add <collection> <price>` to create your first alert!"
-            )
+            response_text = get_text(user_id, 'alerts.list_empty')
             await update.message.reply_text(response_text, parse_mode='Markdown')
             
         elif command == "add":
             if len(context.args) < 3:
-                await update.message.reply_text(
-                    "❌ Please provide collection name and target price.\n\n"
-                    "Usage: `/alerts add <collection> <price>`\n"
-                    "Example: `/alerts add cryptopunks 50`",
-                    parse_mode='Markdown'
-                )
+                usage_text = get_text(user_id, 'alerts.add_usage')
+                await update.message.reply_text(usage_text, parse_mode='Markdown')
                 return
             
             collection_name = context.args[1]
             try:
                 target_price = float(context.args[2])
             except ValueError:
-                await update.message.reply_text(
-                    "❌ Invalid price format. Please enter a valid number.\n\n"
-                    "Example: `/alerts add cryptopunks 50`",
-                    parse_mode='Markdown'
-                )
+                invalid_price_text = get_text(user_id, 'alerts.invalid_price')
+                await update.message.reply_text(invalid_price_text, parse_mode='Markdown')
                 return
             
             # For now, show a success message (in a real implementation, this would save to database)
-            response_text = (
-                f"✅ **Alert Created!**\n\n"
-                f"📊 Collection: {collection_name}\n"
-                f"💰 Target Price: {target_price} ETH\n\n"
-                f"🔔 You'll be notified when the floor price reaches your target.\n\n"
-                f"*Note: This is a demo implementation. Full alert functionality coming soon!*"
-            )
+            success_text = get_text(user_id, 'alerts.add_success')
+            response_text = success_text.format(collection=collection_name, price=target_price)
             await update.message.reply_text(response_text, parse_mode='Markdown')
             
         elif command == "remove":
             if len(context.args) < 2:
-                await update.message.reply_text(
-                    "❌ Please provide alert ID to remove.\n\n"
-                    "Usage: `/alerts remove <id>`\n"
-                    "Use `/alerts list` to see your alert IDs.",
-                    parse_mode='Markdown'
-                )
+                remove_usage_text = get_text(user_id, 'alerts.remove_usage')
+                await update.message.reply_text(remove_usage_text, parse_mode='Markdown')
                 return
             
             alert_id = context.args[1]
             # For now, show a placeholder message
-            response_text = (
-                f"✅ **Alert Removed**\n\n"
-                f"🗑️ Alert ID {alert_id} has been removed.\n\n"
-                f"*Note: This is a demo implementation. Full alert functionality coming soon!*"
-            )
+            remove_success_text = get_text(user_id, 'alerts.remove_success')
+            response_text = remove_success_text.format(alert_id=alert_id)
             await update.message.reply_text(response_text, parse_mode='Markdown')
             
         else:
-            await update.message.reply_text(
-                "❌ Unknown alerts command.\n\n"
-                "Use `/alerts` to see available options.",
-                parse_mode='Markdown'
-            )
+            unknown_command_text = get_text(user_id, 'alerts.unknown_command')
+            await update.message.reply_text(unknown_command_text, parse_mode='Markdown')
         
         logger.info(f"Alerts command used by user {user_id}: {' '.join(context.args)}")
         
     except Exception as e:
         logger.error(f"Error in alerts_command: {e}")
         try:
-            await update.message.reply_text(
-                "❌ Sorry, something went wrong with alerts. Please try again later."
-            )
+            error_text = get_text(user_id, 'alerts.error')
+            await update.message.reply_text(error_text)
         except:
             pass
 
@@ -419,29 +386,28 @@ async def rankings_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     Show top NFT collections by market cap.
     """
     try:
+        user = update.effective_user
+        
         # Send "loading" message
-        loading_msg = await update.message.reply_text(
-            "📊 Loading top NFT collections by market cap..."
-        )
+        loading_text = get_text(user.id, 'rankings.loading')
+        loading_msg = await update.message.reply_text(loading_text)
         
         # Fetch NFT collections data from NFTPriceFloor API
         collections_data = await fetch_nftpf_projects(offset=0, limit=10)
         
         if not collections_data or 'projects' not in collections_data:
-            await loading_msg.edit_text(
-                "❌ Unable to fetch rankings data. Please try again later."
-            )
+            error_text = get_text(user.id, 'rankings.error')
+            await loading_msg.edit_text(error_text)
             return
         
         projects = collections_data.get('projects', [])
         if not projects:
-            await loading_msg.edit_text(
-                "❌ No rankings data available. Please try again later."
-            )
+            no_data_text = get_text(user.id, 'rankings.no_data')
+            await loading_msg.edit_text(no_data_text)
             return
         
         # Format the rankings response
-        response_text = "🏆 **Top NFT Collections**\n\n"
+        response_text = get_text(user.id, 'rankings.title')
         
         for i, project in enumerate(projects[:10], 1):
             name = project.get('name', 'Unknown')
@@ -495,12 +461,14 @@ async def rankings_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -
             )
         
         # Add pagination button
+        next_button_text = get_text(user.id, 'rankings.next_button')
         keyboard = [[
-            InlineKeyboardButton("➡️ Next 10 Collections", callback_data="rankings_next_10")
+            InlineKeyboardButton(next_button_text, callback_data="rankings_next_10")
         ]]
         reply_markup = InlineKeyboardMarkup(keyboard)
         
-        response_text += "\n🔄 *Data from NFTPriceFloor API*"
+        footer_text = get_text(user.id, 'rankings.footer')
+        response_text += f"\n{footer_text}"
         
         await loading_msg.edit_text(
             response_text, 
@@ -512,9 +480,8 @@ async def rankings_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     except Exception as e:
         logger.error(f"Error in rankings_command: {e}")
         try:
-            await update.message.reply_text(
-                "❌ Sorry, something went wrong while fetching rankings data. Please try again later."
-            )
+            error_text = get_text(user.id, 'rankings.error')
+            await update.message.reply_text(error_text)
         except:
             pass
 
@@ -525,32 +492,30 @@ async def rankings_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) 
     """
     try:
         query = update.callback_query
+        user = query.from_user
         await query.answer()
         
         if query.data == "rankings_next_10":
             # Send "loading" message
-            await query.edit_message_text(
-                "📊 Loading next 10 NFT collections..."
-            )
+            loading_text = get_text(user.id, 'rankings.loading_next')
+            await query.edit_message_text(loading_text)
             
             # Fetch next 10 collections
             collections_data = await fetch_nftpf_projects(offset=10, limit=10)
             
             if not collections_data or 'projects' not in collections_data:
-                await query.edit_message_text(
-                    "❌ Unable to fetch more rankings data. Please try again later."
-                )
+                error_text = get_text(user.id, 'rankings.error')
+                await query.edit_message_text(error_text)
                 return
             
             projects = collections_data.get('projects', [])
             if not projects:
-                await query.edit_message_text(
-                    "❌ No more collections available."
-                )
+                no_more_text = get_text(user.id, 'rankings.no_more')
+                await query.edit_message_text(no_more_text)
                 return
             
             # Format the response for next 10
-            response_text = "🏆 **Top NFT Collections - Next 10**\n\n"
+            response_text = get_text(user.id, 'rankings.title_next')
             
             for i, project in enumerate(projects[:10], 11):
                 name = project.get('name', 'Unknown')
@@ -604,12 +569,14 @@ async def rankings_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) 
             )
             
             # Add back button
+            back_button_text = get_text(user.id, 'rankings.back_button')
             keyboard = [[
-                InlineKeyboardButton("⬅️ Back to Top 10", callback_data="rankings_back_10")
+                InlineKeyboardButton(back_button_text, callback_data="rankings_back_10")
             ]]
             reply_markup = InlineKeyboardMarkup(keyboard)
             
-            response_text += "\n🔄 *Data from NFTPriceFloor API*"
+            footer_text = get_text(user.id, 'rankings.footer')
+            response_text += f"\n{footer_text}"
             
             await query.edit_message_text(
                 response_text,
@@ -624,9 +591,8 @@ async def rankings_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) 
     except Exception as e:
         logger.error(f"Error in rankings_callback: {e}")
         try:
-            await query.edit_message_text(
-                "❌ Sorry, something went wrong. Please try again later."
-            )
+            error_text = get_text(user.id, 'rankings.error')
+            await query.edit_message_text(error_text)
         except:
             pass
 
@@ -637,25 +603,106 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     Provides usage instructions and available commands.
     """
     try:
-        help_text = (
-            "📋 **Available Commands:**\n\n"
-            "/start - Welcome message and bot introduction\n"
-            "/help - Show this help message\n"
-            "/price <collection> - Get NFT collection floor price\n"
-            "/rankings - View top NFT collections by volume\n"
-            "/alerts - Manage price alerts\n"
-            "\n"
-            "🔧 **How to use:**\n"
-            "Simply type any of the commands above to interact with the bot.\n\n"
-            "If you encounter any issues, please try again or contact support."
-        )
+        user = update.effective_user
+        
+        # Build help text using translations
+        help_text = get_text(user.id, 'help.title')
+        
+        # Add each command
+        commands = [
+            get_text(user.id, 'help.commands.start'),
+            get_text(user.id, 'help.commands.help'),
+            get_text(user.id, 'help.commands.price'),
+            get_text(user.id, 'help.commands.rankings'),
+            get_text(user.id, 'help.commands.alerts'),
+            get_text(user.id, 'help.commands.language')
+        ]
+        
+        help_text += '\n'.join(commands)
+        help_text += get_text(user.id, 'help.usage')
+        
         await update.message.reply_text(help_text, parse_mode='Markdown')
-        logger.info(f"Help command used by user {update.effective_user.id}")
+        logger.info(f"Help command used by user {user.id}")
     except Exception as e:
         logger.error(f"Error in help_command: {e}")
-        await update.message.reply_text(
-            "Sorry, something went wrong while loading help. Please try again."
-        )
+        error_message = get_text(update.effective_user.id, 'errors.general')
+        await update.message.reply_text(error_message)
+
+
+async def language_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """
+    Handle the /language command.
+    Shows current language and provides options to change it.
+    """
+    try:
+        user = update.effective_user
+        
+        # Show current language
+        current_lang = get_user_language(user.id)
+        current_text = get_text(user.id, 'language.current')
+        select_text = get_text(user.id, 'language.select')
+        
+        # Create inline keyboard for language selection
+        keyboard_options = get_language_options_keyboard()
+        keyboard = []
+        
+        # Arrange buttons in rows (2 per row)
+        for i in range(0, len(keyboard_options), 2):
+            row = []
+            for j in range(i, min(i + 2, len(keyboard_options))):
+                option = keyboard_options[j]
+                row.append(InlineKeyboardButton(
+                    text=option['text'],
+                    callback_data=option['callback_data']
+                ))
+            keyboard.append(row)
+        
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        
+        message_text = f"{current_text}\n\n{select_text}"
+        await update.message.reply_text(message_text, reply_markup=reply_markup)
+        
+        logger.info(f"Language command used by user {user.id}")
+    except Exception as e:
+        logger.error(f"Error in language_command: {e}")
+        error_message = get_text(update.effective_user.id, 'errors.general')
+        await update.message.reply_text(error_message)
+
+
+async def language_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """
+    Handle language selection callbacks.
+    """
+    try:
+        query = update.callback_query
+        await query.answer()
+        
+        user = query.from_user
+        callback_data = query.data
+        
+        if callback_data.startswith('lang_'):
+            language_code = callback_data.replace('lang_', '')
+            
+            if language_code in SUPPORTED_LANGUAGES:
+                # Set the new language
+                set_user_language(user.id, language_code)
+                
+                # Send confirmation in the new language
+                confirmation_text = get_text(user.id, 'language.changed')
+                await query.edit_message_text(confirmation_text)
+                
+                logger.info(f"User {user.id} changed language to {language_code}")
+            else:
+                error_message = get_text(user.id, 'errors.invalid_command')
+                await query.edit_message_text(error_message)
+        
+    except Exception as e:
+        logger.error(f"Error in language_callback: {e}")
+        try:
+            error_message = get_text(update.effective_user.id, 'errors.general')
+            await query.edit_message_text(error_message)
+        except:
+            pass
 
 
 async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -667,9 +714,9 @@ async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE) -> N
     # Try to send error message to user if update is available
     if isinstance(update, Update) and update.effective_message:
         try:
-            await update.effective_message.reply_text(
-                "⚠️ An unexpected error occurred. Please try again later."
-            )
+            user_id = update.effective_user.id if update.effective_user else None
+            error_text = get_text(user_id, 'common.error') if user_id else "⚠️ An unexpected error occurred. Please try again later."
+            await update.effective_message.reply_text(error_text)
         except Exception as e:
             logger.error(f"Failed to send error message to user: {e}")
 
@@ -688,10 +735,12 @@ def main() -> None:
         application.add_handler(CommandHandler("price", price_command))
         application.add_handler(CommandHandler("rankings", rankings_command))
         application.add_handler(CommandHandler("alerts", alerts_command))
+        application.add_handler(CommandHandler("language", language_command))
         # application.add_handler(CommandHandler("top_sales", top_sales_command))  # Temporarily deactivated
         
-        # Add callback query handler
-        application.add_handler(CallbackQueryHandler(rankings_callback))
+        # Add callback query handlers
+        application.add_handler(CallbackQueryHandler(rankings_callback, pattern='^rankings_'))
+        application.add_handler(CallbackQueryHandler(language_callback, pattern='^lang_'))
         
         # Add error handler
         application.add_error_handler(error_handler)
