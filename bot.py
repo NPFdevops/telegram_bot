@@ -115,11 +115,12 @@ async def search_nftpf_collection(collection_name: str) -> Optional[Dict[str, An
         # First get all projects and search for the collection
         collections_data = await fetch_nftpf_projects(offset=0, limit=200)
         
-        if not collections_data or 'projects' not in collections_data:
+        if not collections_data:
             logger.warning("No collections data received from API")
             return None
         
-        projects = collections_data.get('projects', [])
+        # Handle both 'data' and 'projects' keys for API response compatibility
+        projects = collections_data.get('data', collections_data.get('projects', []))
         logger.info(f"Searching through {len(projects)} projects for '{collection_name}'")
         
         # Search for collection by name (case-insensitive)
@@ -426,12 +427,13 @@ async def rankings_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -
         # Fetch NFT collections data from NFTPriceFloor API
         collections_data = await fetch_nftpf_projects(offset=0, limit=10)
         
-        if not collections_data or 'projects' not in collections_data:
+        if not collections_data:
             error_text = get_text(user.id, 'rankings.error')
             await loading_msg.edit_text(error_text)
             return
         
-        projects = collections_data.get('projects', [])
+        # Handle both 'data' and 'projects' keys for API response compatibility
+        projects = collections_data.get('data', collections_data.get('projects', []))
         if not projects:
             no_data_text = get_text(user.id, 'rankings.no_data')
             await loading_msg.edit_text(no_data_text)
@@ -534,12 +536,13 @@ async def rankings_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) 
             # Fetch next 10 collections
             collections_data = await fetch_nftpf_projects(offset=10, limit=10)
             
-            if not collections_data or 'projects' not in collections_data:
+            if not collections_data:
                 error_text = get_text(user.id, 'rankings.error')
                 await query.edit_message_text(error_text)
                 return
             
-            projects = collections_data.get('projects', [])
+            # Handle both 'data' and 'projects' keys for API response compatibility
+            projects = collections_data.get('data', collections_data.get('projects', []))
             if not projects:
                 no_more_text = get_text(user.id, 'rankings.no_more')
                 await query.edit_message_text(no_more_text)
@@ -567,37 +570,36 @@ async def rankings_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) 
                 volume_data = stats.get('volume', {})
                 count_data = stats.get('count', {})
                 sales_temp_native = stats.get('salesTemporalityNative', {})
-                volume_24h = sales_temp_native.get('lowest', {}).get('val24h', 0)
+                volume_24h = sales_temp_native.get('volume', {}).get('val24h', 0)
                 sales_24h = count_data.get('val24h', 0)
-                sales_average = sales_temp_native.get('average', {}).get('val24h', 0)
                 sales_count_native = sales_temp_native.get('count', {}).get('val24h', 0)
-            
-            # Create hyperlink for collection name
-            collection_link = f"[{name}](https://nftpricefloor.com/{slug}?=tbot)"
-            
-            # Format floor price in ETH and USD
-            floor_eth = f"{floor_price_eth:.1f} ETH" if floor_price_eth else "N/A"
-            floor_usd = f"${floor_price_usd:,.0f}" if floor_price_usd else "N/A"
-            floor_display = f"{floor_eth} ({floor_usd})" if floor_price_eth and floor_price_usd else "N/A"
-            
-            # Format 24h price change
-            if price_change_24h:
-                sign = "+" if price_change_24h >= 0 else ""
-                price_change_display = f"{sign}{price_change_24h:.1f}% {sign}${price_change_24h_usd:.1f}"
-            else:
-                price_change_display = "N/A"
-            
-            # Format 24h volume and sales
-            vol_24h = f"{volume_24h:.1f} ETH" if volume_24h else "N/A"
-            sales_count = f"{int(sales_24h)} sales" if sales_24h else "N/A"
-            volume_sales_display = f"{vol_24h} ({sales_count})" if volume_24h and sales_24h else "N/A"
-            
-            response_text += (
-                f"{i}. {collection_link}\n"
-                f"   📈 24h Change: {price_change_display}\n"
-                f"   🏠 Floor: {floor_display}\n"
-                f"   📊 24h Volume: {volume_sales_display}\n\n"
-            )
+                
+                # Create hyperlink for collection name
+                collection_link = f"[{name}](https://nftpricefloor.com/{slug}?=tbot)"
+                
+                # Format floor price in ETH and USD
+                floor_eth = f"{floor_price_eth:.1f} ETH" if floor_price_eth else "N/A"
+                floor_usd = f"${floor_price_usd:,.0f}" if floor_price_usd else "N/A"
+                floor_display = f"{floor_eth} ({floor_usd})" if floor_price_eth and floor_price_usd else "N/A"
+                
+                # Format 24h price change
+                if price_change_24h:
+                    sign = "+" if price_change_24h >= 0 else ""
+                    price_change_display = f"{sign}{price_change_24h:.1f}% {sign}${price_change_24h_usd:.1f}"
+                else:
+                    price_change_display = "N/A"
+                
+                # Format 24h volume and sales
+                vol_24h = f"{volume_24h:.1f} ETH" if volume_24h else "N/A"
+                sales_count = f"{int(sales_24h)} sales" if sales_24h else "N/A"
+                volume_sales_display = f"{vol_24h} ({sales_count})" if volume_24h and sales_24h else "N/A"
+                
+                response_text += (
+                    f"{i}. {collection_link}\n"
+                    f"   📈 24h Change: {price_change_display}\n"
+                    f"   🏠 Floor: {floor_display}\n"
+                    f"   📊 24h Volume: {volume_sales_display}\n\n"
+                )
             
             # Add back button
             back_button_text = get_text(user.id, 'rankings.back_button')
@@ -1251,12 +1253,13 @@ async def rankings_command_from_callback(query, user_id: int) -> None:
         # Fetch rankings data
         rankings_data = await fetch_nftpf_projects(offset=0, limit=10)
         
-        if not rankings_data or 'projects' not in rankings_data:
+        if not rankings_data:
             error_message = get_text(user_id, 'rankings.error')
             await query.edit_message_text(error_message)
             return
         
-        projects = rankings_data['projects']
+        # Handle both 'data' and 'projects' keys for API response compatibility
+        projects = rankings_data.get('data', rankings_data.get('projects', []))
         if not projects:
             no_data_message = get_text(user_id, 'rankings.no_data')
             await query.edit_message_text(no_data_message)
@@ -1267,12 +1270,22 @@ async def rankings_command_from_callback(query, user_id: int) -> None:
         
         for i, project in enumerate(projects[:10], 1):
             name = project.get('name', 'Unknown')
-            floor_price = project.get('floor_price', 0)
-            volume_24h = project.get('volume_24h', 0)
+            slug = project.get('slug', '')
+            stats = project.get('stats', {})
+            floor_info = stats.get('floorInfo', {})
+            
+            floor_price_eth = floor_info.get('currentFloorNative', 0)
+            
+            # Get 24h volume from salesTemporalityNative
+            sales_temp_native = stats.get('salesTemporalityNative', {})
+            volume_24h = sales_temp_native.get('volume', {}).get('val24h', 0)
+            
+            # Create hyperlink for collection name
+            collection_link = f"[{name}](https://nftpricefloor.com/{slug}?=tbot)"
             
             rankings_text += get_text(user_id, 'rankings.item',
-                                    rank=i, name=name, 
-                                    floor=f"{floor_price:.2f}" if floor_price else "N/A",
+                                    rank=i, name=collection_link, 
+                                    floor=f"{floor_price_eth:.2f}" if floor_price_eth else "N/A",
                                     volume=f"{volume_24h:.2f}" if volume_24h else "N/A")
         
         rankings_text += "\n" + get_text(user_id, 'rankings.footer')

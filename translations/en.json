@@ -374,5 +374,95 @@
       "quick_alerts": "⚡ Quick Alert Setup",
       "settings": "⚙️ Alert Settings"
     }
+  },
+  "popular_collections": {
+    "title": "📈 Popular NFT Collections",
+    "subtitle": "Explore the most popular and high-volume collections",
+    "view_price": "💰 View Price",
+    "set_alert": "🔔 Set Alert",
+    "tags": {
+      "blue_chip": "🔵 Blue Chip",
+      "trending": "🔥 Trending",
+      "high_volume": "📊 High Volume",
+      "recommended": "⭐ Recommended",
+      "new_project": "🆕 New Project"
+    },
+    "curated_list": {
+      "cryptopunks": {
+        "name": "CryptoPunks",
+        "description": "Original NFT collection - 10,000 unique pixel art characters",
+        "tags": ["blue_chip", "high_volume"]
+      },
+      "bored-ape-yacht-club": {
+        "name": "Bored Ape Yacht Club",
+        "description": "Exclusive membership club with unique ape avatars",
+        "tags": ["blue_chip", "recommended"]
+      },
+      "mutant-ape-yacht-club": {
+        "name": "Mutant Ape Yacht Club",
+        "description": "Mutated versions of the original Bored Apes",
+        "tags": ["trending", "high_volume"]
+      },
+      "azuki": {
+        "name": "Azuki",
+        "description": "Anime-inspired avatars with unique traits and storylines",
+        "tags": ["trending", "recommended"]
+      },
+      "doodles-official": {
+        "name": "Doodles",
+        "description": "Colorful hand-drawn characters with vibrant personalities",
+        "tags": ["blue_chip", "trending"]
+      },
+      "otherdeed-for-otherdeeds": {
+        "name": "Otherdeeds for Otherlands",
+        "description": "Virtual land NFTs for the upcoming Otherside metaverse",
+        "tags": ["trending", "high_volume"]
+      },
+      "clonex": {
+        "name": "CloneX",
+        "description": "Next-gen avatars by RTFKT Studios, now owned by Nike",
+        "tags": ["blue_chip", "recommended"]
+      },
+      "moonbirds": {
+        "name": "Moonbirds",
+        "description": "Utility-enabled PFPs featuring owls with rich traits",
+        "tags": ["blue_chip", "trending"]
+      },
+      "veefriends": {
+        "name": "VeeFriends",
+        "description": "Hand-drawn character collection by Gary Vaynerchuk",
+        "tags": ["trending", "recommended"]
+      },
+      "world-of-women-nft": {
+        "name": "World of Women",
+        "description": "Diverse and inclusive women-focused NFT collection",
+        "tags": ["trending", "recommended"]
+      },
+      "cool-cats-nft": {
+        "name": "Cool Cats",
+        "description": "Programmatically generated cats with various traits",
+        "tags": ["blue_chip", "trending"]
+      },
+      "pudgy-penguins": {
+        "name": "Pudgy Penguins",
+        "description": "Adorable penguin characters with unique accessories",
+        "tags": ["trending", "recommended"]
+      },
+      "the-sandbox": {
+        "name": "The Sandbox",
+        "description": "Virtual world where players can build and monetize",
+        "tags": ["trending", "high_volume"]
+      },
+      "decentraland": {
+        "name": "Decentraland",
+        "description": "Virtual reality platform powered by Ethereum",
+        "tags": ["blue_chip", "high_volume"]
+      },
+      "art-blocks-curated": {
+        "name": "Art Blocks Curated",
+        "description": "Generative art platform with curated collections",
+        "tags": ["blue_chip", "recommended"]
+      }
+    }
   }
 }
