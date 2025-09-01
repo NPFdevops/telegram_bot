@@ -1,35 +1,106 @@
 {
   "welcome": {
-    "greeting": "🤖 Hello {name}!\n\nWelcome to NFT Market Insights Bot! I'm here to help you track NFT collections, set price alerts, and stay updated with the latest market trends.\n\nUse /help to see available commands.",
-    "language_set": "Language set to English 🇺🇸"
+    "greeting": "🤖 Hello {name}!\n\nWelcome to NFT Market Insights Bot! I'm here to help you track NFT collections, set price alerts, and stay updated with the latest market trends.\n\n✨ **Let's get you started:**\n\n🎯 Quick Actions:\n• 💰 Check floor prices\n• 🏆 Browse top collections\n• 🔔 Set price alerts\n• 🌍 Change language\n\nChoose an option below or use /help for all commands!",
+    "language_set": "Language set to English 🇺🇸",
+    "tutorial": {
+      "title": "🎓 **Quick Tutorial**\n\n",
+      "step1": "**Step 1:** 💰 Check Collection Prices\nUse `/price cryptopunks` to get floor price info",
+      "step2": "**Step 2:** 🏆 Browse Rankings\nUse `/rankings` to see top collections by volume",
+      "step3": "**Step 3:** 🔔 Set Price Alerts\nUse `/alerts add cryptopunks 50` to get notified",
+      "step4": "**Step 4:** 🌍 Choose Your Language\nUse `/language` to switch languages",
+      "complete": "🎉 You're all set! Try any command to get started."
+    },
+    "quick_actions": {
+      "title": "🚀 **Quick Actions**",
+      "popular_collections": "📈 Popular Collections",
+      "top_rankings": "🏆 Top Rankings",
+      "set_alert": "🔔 Set Alert",
+      "tutorial": "🎓 Tutorial",
+      "help": "❓ Help"
+    }
   },
   "help": {
-    "title": "📋 **Available Commands:**\n\n",
+    "title": "🤖 **NFT Bot Help**\n\nAvailable commands:",
     "commands": {
-      "start": "/start - Welcome message and bot introduction",
-      "help": "/help - Show this help message",
-      "price": "/price <collection> - Get NFT collection floor price",
-      "rankings": "/rankings - View top NFT collections by volume",
-      "alerts": "/alerts - Manage price alerts",
-      "language": "/language - Change bot language"
+      "/price [collection]": "💰 Get floor price for any NFT collection",
+      "/rankings": "🏆 View top NFT collections by volume",
+      "/alerts": "🔔 Manage your price alerts (up to 10)",
+      "/language": "🌍 Change bot language",
+      "/help": "❓ Show this help message"
     },
-    "usage": "\n🔧 **How to use:**\nSimply type any of the commands above to interact with the bot.\n\nIf you encounter any issues, please try again or contact support."
+    "usage": "💡 **Examples:**\n• `/price cryptopunks` - Get CryptoPunks floor price\n• `/alerts add bored-ape-yacht-club 50` - Set alert at 50 ETH\n• `/rankings` - Browse top collections",
+    "detailed": {
+      "price_help": {
+        "title": "💰 **Price Command Help**",
+        "description": "Get real-time floor prices for any NFT collection.",
+        "usage": "**Usage:** `/price [collection_name]`",
+        "examples": [
+          "📝 **Examples:**",
+          "• `/price cryptopunks` - Get CryptoPunks floor price",
+          "• `/price bored ape yacht club` - Get BAYC floor price",
+          "• `/price azuki` - Get Azuki floor price"
+        ],
+        "tips": [
+          "💡 **Tips:**",
+          "• You can use full collection names or common abbreviations",
+          "• The bot will suggest similar collections if not found",
+          "• Results include 24h price change and volume data"
+        ]
+      },
+      "rankings_help": {
+        "title": "🏆 **Rankings Command Help**",
+        "description": "Browse top NFT collections ranked by various metrics.",
+        "usage": "**Usage:** `/rankings [filter]`",
+        "examples": [
+          "📝 **Examples:**",
+          "• `/rankings` - View top collections by volume",
+          "• `/rankings volume` - Sort by trading volume",
+          "• `/rankings price` - Sort by floor price"
+        ],
+        "tips": [
+          "💡 **Tips:**",
+          "• Use navigation buttons to browse through pages",
+          "• Click on any collection for detailed information",
+          "• Rankings update in real-time"
+        ]
+      },
+      "alerts_help": {
+        "title": "🔔 **Alerts Command Help**",
+        "description": "Set up to 10 price alerts for your favorite collections.",
+        "usage": "**Usage:** `/alerts [action] [collection] [price]`",
+        "examples": [
+          "📝 **Examples:**",
+          "• `/alerts` - View all your alerts",
+          "• `/alerts add cryptopunks 100` - Alert when CryptoPunks hits 100 ETH",
+          "• `/alerts remove cryptopunks` - Remove CryptoPunks alert",
+          "• `/alerts list` - List all active alerts"
+        ],
+        "tips": [
+          "💡 **Tips:**",
+          "• You can have up to 10 active alerts",
+          "• Alerts trigger when floor price crosses your target",
+          "• Use `/alerts` to manage existing alerts"
+        ]
+      }
+    }
   },
   "price": {
-    "usage": "Please provide a collection name. Usage: /price <collection_name>",
+    "usage": "💡 Please provide a collection name. Usage: /price <collection_name>",
     "searching": "🔍 Searching for collection: {collection}...",
     "not_found": "❌ Collection '{collection}' not found. Please check the spelling and try again.",
     "error": "⚠️ Error fetching price data. Please try again later.",
+    "success": "✅ Price data retrieved successfully!",
     "floor_price": "💎 **{name}**\n\n💰 Floor Price: **{price} ETH**\n📊 24h Change: **{change}%**\n🔗 [View Details]({link})"
   },
   "rankings": {
     "title": "🏆 **Top NFT Collections**\n\n",
-    "title_next": "🏆 **Top NFT Collections - Next 10**\n\n",
-    "loading": "📊 Loading top NFT collections...",
-    "loading_next": "📊 Loading next 10 NFT collections...",
-    "error": "⚠️ Error fetching rankings data. Please try again later.",
+    "title_next": "🏆 **Top NFT Collections (11-20)**\n\n",
+    "loading": "⏳ Loading rankings...",
+    "loading_next": "⏳ Loading next 10 collections...",
+    "error": "❌ Error fetching rankings. Please try again later.",
     "no_data": "❌ No rankings data available at the moment.",
-    "no_more": "❌ No more collections available.",
+    "no_more": "📄 No more collections to display.",
+    "success": "✅ Rankings loaded successfully!",
     "next_button": "➡️ Next 10 Collections",
     "back_button": "⬅️ Back to Top 10",
     "footer": "🔄 *Data from NFTPriceFloor API*",
@@ -51,14 +122,16 @@
     "unknown_command": "❌ Unknown alerts command.\n\nUse `/alerts` to see available options.",
     "error": "❌ Sorry, something went wrong with alerts. Please try again later.",
     "title": "🔔 **Price Alert Management**\n\n",
-    "no_alerts": "You have no active price alerts.\n\nTo set an alert, use: /alert <collection> <price>",
-    "max_alerts": "❌ You have reached the maximum limit of 10 alerts. Please remove an existing alert before adding a new one.",
-    "usage": "Usage: /alert <collection> <target_price>\nExample: /alert cryptopunks 50",
+    "no_alerts": "📭 You have no active price alerts.\n\nTo set an alert, use: /alert <collection> <price>",
+    "max_alerts": "⚠️ You have reached the maximum limit of 10 alerts. Please remove an existing alert before adding a new one.",
+    "usage": "💡 Usage: /alert <collection> <target_price>\nExample: /alert cryptopunks 50",
     "set_success": "✅ Alert set for {collection} at {price} ETH",
     "set_error": "❌ Error setting alert. Please try again.",
-    "list_header": "Your active alerts:\n\n",
+    "list_header": "📋 Your active alerts:\n\n",
     "alert_item": "{index}. {collection} - {price} ETH\n",
-    "remove_usage_old": "To remove an alert, use: /remove_alert <number>"
+    "remove_usage_old": "💡 To remove an alert, use: /remove_alert <number>",
+    "success": "✅ Alert configured successfully!",
+    "processing": "⏳ Processing your alert..."
   },
   "language": {
     "current": "Current language: English 🇺🇸",
@@ -71,8 +144,12 @@
     }
   },
   "errors": {
-    "general": "⚠️ An unexpected error occurred. Please try again later.",
-    "api_error": "⚠️ Service temporarily unavailable. Please try again later.",
+    "general": "❌ Something went wrong. Please try again.",
+    "api_error": "🔌 API error. Please try again later.",
+    "not_found": "🔍 Collection not found.",
+    "invalid_input": "⚠️ Invalid input. Please check your command.",
+    "network_error": "🌐 Network error. Please check your connection.",
+    "timeout": "⏰ Request timed out. Please try again.",
     "invalid_command": "❌ Invalid command. Use /help to see available commands."
   },
   "common": {
@@ -83,5 +160,219 @@
     "back": "Back",
     "next": "Next",
     "previous": "Previous"
+  },
+  "navigation": {
+    "back": "🔙 Back",
+    "next": "➡️ Next",
+    "previous": "⬅️ Previous",
+    "main_menu": "🏠 Main Menu"
+  },
+  "search": {
+    "instructions": "🔍 <b>Search Collections</b>\n\nTo search for a specific NFT collection, simply type:\n\n<code>/price [collection name]</code>\n\nFor example:\n• <code>/price bored ape</code>\n• <code>/price cryptopunks</code>\n• <code>/price azuki</code>\n\nThe bot will find the collection and show you the current floor price and market data!"
+  },
+  "quick_access": {
+    "title": "⚡ <b>Quick Access Collections</b>\n\nSelect a popular collection to view its current market data:"
+  },
+  "collections": {
+    "popular": {
+      "title": "📈 **Popular NFT Collections**\n\n",
+      "subtitle": "🔥 Trending collections with high activity\n\n",
+      "view_all": "📋 View All Collections",
+      "check_price": "💰 Check Price",
+      "set_alert": "🔔 Set Alert",
+      "recommended": "⭐ Recommended",
+      "trending": "🔥 Trending",
+      "blue_chip": "💎 Blue Chip",
+      "new_project": "🆕 New Project",
+      "high_volume": "📊 High Volume"
+    },
+    "curated_list": {
+       "cryptopunks": {
+         "name": "CryptoPunks",
+         "description": "The original NFT collection - 10,000 unique pixel art characters",
+         "tags": ["blue_chip", "high_volume"]
+       },
+       "bored-ape-yacht-club": {
+         "name": "Bored Ape Yacht Club",
+         "description": "Exclusive membership club with unique ape avatars",
+         "tags": ["blue_chip", "recommended"]
+       },
+       "mutant-ape-yacht-club": {
+         "name": "Mutant Ape Yacht Club",
+         "description": "Mutated versions of the original Bored Apes",
+         "tags": ["trending", "high_volume"]
+       },
+       "azuki": {
+         "name": "Azuki",
+         "description": "Anime-inspired avatars with unique traits and storylines",
+         "tags": ["trending", "recommended"]
+       },
+       "doodles-official": {
+         "name": "Doodles",
+         "description": "Colorful hand-drawn characters with vibrant personalities",
+         "tags": ["blue_chip", "trending"]
+       },
+       "otherdeed-for-otherdeeds": {
+         "name": "Otherdeeds for Otherlands",
+         "description": "Virtual land NFTs for the upcoming Otherside metaverse",
+         "tags": ["trending", "high_volume"]
+       },
+       "clonex": {
+         "name": "CloneX",
+         "description": "Next-gen avatars by RTFKT Studios, now owned by Nike",
+         "tags": ["blue_chip", "recommended"]
+       },
+       "moonbirds": {
+         "name": "Moonbirds",
+         "description": "Utility-enabled PFPs featuring owls with rich traits",
+         "tags": ["blue_chip", "trending"]
+       },
+       "veefriends": {
+         "name": "VeeFriends",
+         "description": "Gary Vaynerchuk's hand-drawn character collection",
+         "tags": ["trending", "recommended"]
+       },
+       "world-of-women-nft": {
+         "name": "World of Women",
+         "description": "Celebrating representation through diverse female avatars",
+         "tags": ["trending", "recommended"]
+       },
+       "cool-cats-nft": {
+         "name": "Cool Cats",
+         "description": "Programmatically generated cats with unique traits",
+         "tags": ["blue_chip", "trending"]
+       },
+       "pudgypenguins": {
+         "name": "Pudgy Penguins",
+         "description": "Adorable penguin characters with varying traits",
+         "tags": ["blue_chip", "recommended"]
+       },
+       "artblocks-curated": {
+         "name": "Art Blocks Curated",
+         "description": "Generative art platform featuring algorithmic creations",
+         "tags": ["blue_chip", "high_volume"]
+       },
+       "chromie-squiggle-by-snowfro": {
+         "name": "Chromie Squiggle",
+         "description": "Iconic generative art by Snowfro, Art Blocks' first project",
+         "tags": ["blue_chip", "recommended"]
+       },
+       "meebits": {
+         "name": "Meebits",
+         "description": "3D voxel characters by Larva Labs (CryptoPunks creators)",
+         "tags": ["blue_chip", "trending"]
+       },
+       "sandbox": {
+         "name": "The Sandbox",
+         "description": "Virtual world where players can build and monetize experiences",
+         "tags": ["trending", "high_volume"]
+       },
+       "decentraland": {
+         "name": "Decentraland",
+         "description": "Virtual reality platform powered by Ethereum blockchain",
+         "tags": ["trending", "high_volume"]
+       },
+       "cryptokitties": {
+         "name": "CryptoKitties",
+         "description": "The original collectible cats that started the NFT craze",
+         "tags": ["blue_chip", "recommended"]
+       },
+       "loot-for-adventurers": {
+         "name": "Loot (for Adventurers)",
+         "description": "Randomized adventurer gear generated and stored on chain",
+         "tags": ["trending", "recommended"]
+       },
+       "ens": {
+         "name": "Ethereum Name Service",
+         "description": "Decentralized naming service for Ethereum addresses",
+         "tags": ["trending", "high_volume"]
+       },
+       "goblintown-wtf": {
+         "name": "goblintown.wtf",
+         "description": "Free-to-mint goblin NFTs with no roadmap or utility",
+         "tags": ["trending", "new_project"]
+       },
+       "proof-moonbirds": {
+         "name": "Proof Collective",
+         "description": "Private collective of NFT collectors and artists",
+         "tags": ["blue_chip", "recommended"]
+       },
+       "hashmasks": {
+         "name": "Hashmasks",
+         "description": "Digital art collectibles with naming rights",
+         "tags": ["blue_chip", "trending"]
+       },
+       "cyberkongz": {
+         "name": "CyberKongz",
+         "description": "Pixelated gorillas with yield-generating capabilities",
+         "tags": ["trending", "recommended"]
+       },
+       "deadfellaz": {
+         "name": "Deadfellaz",
+         "description": "Undead characters in a post-apocalyptic world",
+         "tags": ["trending", "recommended"]
+       },
+       "lazy-lions": {
+         "name": "Lazy Lions",
+         "description": "Roaring into the metaverse with unique lion characters",
+         "tags": ["trending", "new_project"]
+       },
+       "creature-world-nft": {
+         "name": "Creature World",
+         "description": "Adorable creatures living in a magical world",
+         "tags": ["trending", "new_project"]
+       },
+       "gutter-cat-gang": {
+         "name": "Gutter Cat Gang",
+         "description": "Street cats from the gutter with attitude",
+         "tags": ["trending", "recommended"]
+       },
+       "0n1-force": {
+         "name": "0N1 Force",
+         "description": "Anime-inspired warriors bridging the gap to the metaverse",
+         "tags": ["trending", "recommended"]
+       },
+       "superlative-apes": {
+         "name": "Superlative Apes",
+         "description": "Next evolution of ape NFTs with enhanced utility",
+         "tags": ["new_project", "trending"]
+       },
+       "board-ape-kennel-club": {
+         "name": "Bored Ape Kennel Club",
+         "description": "Companion dogs for Bored Ape Yacht Club members",
+         "tags": ["blue_chip", "recommended"]
+       }
+     }
+  },
+  "menus": {
+    "main": {
+      "title": "🎛️ **Main Menu**\n\nChoose a category:",
+      "market_data": "📊 Market Data",
+      "collections": "🖼️ Collections",
+      "alerts": "🔔 Alerts",
+      "settings": "⚙️ Settings",
+      "help": "❓ Help & Tutorial"
+    },
+    "market_data": {
+      "title": "📊 **Market Data**\n\nWhat would you like to check?",
+      "floor_prices": "💰 Floor Prices",
+      "rankings": "🏆 Rankings",
+      "top_sales": "💎 Top Sales",
+      "trending": "🔥 Trending Now"
+    },
+    "collections_menu": {
+      "title": "🖼️ **Collections**\n\nExplore NFT collections:",
+      "popular": "📈 Popular Collections",
+      "search": "🔍 Search Collection",
+      "categories": "📂 Browse Categories",
+      "new_releases": "🆕 New Releases"
+    },
+    "alerts_menu": {
+      "title": "🔔 **Price Alerts**\n\nManage your alerts:",
+      "view_alerts": "📋 View My Alerts",
+      "add_alert": "➕ Add New Alert",
+      "quick_alerts": "⚡ Quick Alert Setup",
+      "settings": "⚙️ Alert Settings"
+    }
   }
 }

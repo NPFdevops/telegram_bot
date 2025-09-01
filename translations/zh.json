@@ -4,32 +4,87 @@
     "language_set": "语言已设置为中文 🇨🇳"
   },
   "help": {
-    "title": "📋 **可用命令：**\n\n",
+    "title": "🤖 **NFT机器人帮助**\n\n可用命令：",
     "commands": {
-      "start": "/start - 欢迎消息和机器人介绍",
-      "help": "/help - 显示此帮助消息",
-      "price": "/price <收藏品> - 获取NFT收藏品地板价",
-      "rankings": "/rankings - 查看按交易量排名的顶级NFT收藏品",
-      "alerts": "/alerts - 管理价格提醒",
-      "language": "/language - 更改机器人语言"
+      "/price [收藏]": "💰 获取任何NFT收藏的地板价",
+      "/rankings": "🏆 按交易量查看顶级NFT收藏",
+      "/alerts": "🔔 管理您的价格提醒（最多10个）",
+      "/language": "🌍 更改机器人语言",
+      "/help": "❓ 显示此帮助信息"
     },
-    "usage": "\n🔧 **使用方法：**\n只需输入上述任何命令即可与机器人互动。\n\n如果遇到任何问题，请重试或联系支持。"
+    "usage": "💡 **示例：**\n• `/price cryptopunks` - 获取CryptoPunks地板价\n• `/alerts add bored-ape-yacht-club 50` - 设置50 ETH提醒\n• `/rankings` - 浏览顶级收藏",
+    "detailed": {
+      "price_help": {
+        "title": "💰 **价格命令帮助**",
+        "description": "获取任何NFT收藏的实时地板价。",
+        "usage": "**用法：** `/price [收藏名称]`",
+        "examples": [
+          "📝 **示例：**",
+          "• `/price cryptopunks` - 获取CryptoPunks地板价",
+          "• `/price bored ape yacht club` - 获取BAYC地板价",
+          "• `/price azuki` - 获取Azuki地板价"
+        ],
+        "tips": [
+          "💡 **提示：**",
+          "• 您可以使用完整的收藏名称或常见缩写",
+          "• 如果未找到，机器人会建议相似的收藏",
+          "• 结果包括24小时价格变化和交易量数据"
+        ]
+      },
+      "rankings_help": {
+        "title": "🏆 **排行榜命令帮助**",
+        "description": "浏览按各种指标排名的顶级NFT收藏。",
+        "usage": "**用法：** `/rankings [筛选器]`",
+        "examples": [
+          "📝 **示例：**",
+          "• `/rankings` - 按交易量查看顶级收藏",
+          "• `/rankings volume` - 按交易量排序",
+          "• `/rankings price` - 按地板价排序"
+        ],
+        "tips": [
+          "💡 **提示：**",
+          "• 使用导航按钮浏览页面",
+          "• 点击任何收藏查看详细信息",
+          "• 排行榜实时更新"
+        ]
+      },
+      "alerts_help": {
+        "title": "🔔 **提醒命令帮助**",
+        "description": "为您喜爱的收藏设置最多10个价格提醒。",
+        "usage": "**用法：** `/alerts [操作] [收藏] [价格]`",
+        "examples": [
+          "📝 **示例：**",
+          "• `/alerts` - 查看所有提醒",
+          "• `/alerts add cryptopunks 100` - 当CryptoPunks达到100 ETH时提醒",
+          "• `/alerts remove cryptopunks` - 删除CryptoPunks提醒",
+          "• `/alerts list` - 列出所有活跃提醒"
+        ],
+        "tips": [
+          "💡 **提示：**",
+          "• 您最多可以有10个活跃提醒",
+          "• 当地板价达到您的目标时提醒会触发",
+          "• 使用 `/alerts` 管理现有提醒"
+        ]
+      }
+    }
   },
   "price": {
-    "usage": "请提供收藏品名称。用法：/price <收藏品名称>",
-    "searching": "🔍 正在搜索收藏品：{collection}...",
-    "not_found": "❌ 未找到收藏品 '{collection}'。请检查拼写并重试。",
-    "error": "⚠️ 获取价格数据时出错。请稍后重试。",
+    "usage": "💡 用法：`/price <收藏品名称>`\n\n示例：`/price bored ape yacht club`",
+    "searching": "🔍 正在搜索 **{collection}**...",
+    "not_found": "❌ 未找到收藏品 **{collection}**。\n\n请检查拼写或尝试其他名称。",
+    "error": "❌ 获取价格数据时出错。请稍后重试。",
+    "success": "✅ 价格数据获取成功！",
     "floor_price": "💎 **{name}**\n\n💰 地板价：**{price} ETH**\n📊 24小时变化：**{change}%**\n🔗 [查看详情]({link})"
   },
   "rankings": {
     "title": "🏆 **顶级NFT收藏品**\n\n",
-    "title_next": "🏆 **顶级NFT收藏品 - 接下来10个**\n\n",
-    "loading": "📊 正在加载顶级NFT收藏品...",
-    "loading_next": "📊 正在加载接下来10个NFT收藏品...",
-    "error": "⚠️ 获取排名数据时出错。请稍后重试。",
+    "title_next": "🏆 **顶级NFT收藏品 (11-20)**\n\n",
+    "loading": "⏳ 正在加载排名...",
+    "loading_next": "⏳ 正在加载接下来的10个收藏品...",
+    "error": "❌ 获取排名时出错。请稍后重试。",
     "no_data": "❌ 目前没有可用的排名数据。",
-    "no_more": "❌ 没有更多收藏品可用。",
+    "no_more": "📄 没有更多收藏品可显示。",
+    "success": "✅ 排名加载成功！",
     "next_button": "➡️ 接下来10个收藏品",
     "back_button": "⬅️ 返回前10名",
     "footer": "🔄 *数据来自NFTPriceFloor API*",
@@ -43,22 +98,24 @@
   "alerts": {
     "help": "🔔 **NFT价格提醒**\n\n**命令：**\n`/alerts list` - 查看您的活跃提醒\n`/alerts add <收藏品> <价格>` - 添加价格提醒\n`/alerts remove <id>` - 按ID删除提醒\n\n**示例：**\n`/alerts add cryptopunks 50` - 当CryptoPunks地板价达到50 ETH时提醒\n`/alerts add bored-ape-yacht-club 30` - BAYC达到30 ETH时提醒\n\n💡 *提醒每小时检查一次价格*",
     "list_empty": "📋 **您的活跃提醒**\n\n🔄 未找到活跃提醒。\n\n使用 `/alerts add <收藏品> <价格>` 创建您的第一个提醒！",
-    "add_usage": "❌ 请提供收藏品名称和目标价格。\n\n用法：`/alerts add <收藏品> <价格>`\n示例：`/alerts add cryptopunks 50`",
-    "invalid_price": "❌ 价格格式无效。请输入有效数字。\n\n示例：`/alerts add cryptopunks 50`",
+    "add_usage": "❌ 请提供收藏品名称和目标价格。\n\n💡 用法：`/alerts add <收藏品> <价格>`\n📝 示例：`/alerts add cryptopunks 50`",
+    "invalid_price": "❌ 价格格式无效。请输入有效数字。\n\n📝 示例：`/alerts add cryptopunks 50`",
     "add_success": "✅ **提醒已创建！**\n\n📊 收藏品：{collection}\n💰 目标价格：{price} ETH\n\n🔔 当地板价达到您的目标时，您将收到通知。\n\n*注意：这是演示实现。完整的提醒功能即将推出！*",
-    "remove_usage": "❌ 请提供要删除的提醒ID。\n\n用法：`/alerts remove <id>`\n使用 `/alerts list` 查看您的提醒ID。",
+    "remove_usage": "❌ 请提供要删除的提醒ID。\n\n💡 用法：`/alerts remove <id>`\n📋 使用 `/alerts list` 查看您的提醒ID。",
     "remove_success": "✅ **提醒已删除**\n\n🗑️ 提醒ID {alert_id} 已被删除。\n\n*注意：这是演示实现。完整的提醒功能即将推出！*",
-    "unknown_command": "❌ 未知的提醒命令。\n\n使用 `/alerts` 查看可用选项。",
+    "unknown_command": "❌ 未知的提醒命令。\n\n💡 使用 `/alerts` 查看可用选项。",
     "error": "❌ 抱歉，提醒功能出现问题。请稍后重试。",
     "title": "🔔 **价格提醒管理**\n\n",
-    "no_alerts": "您没有活跃的价格提醒。\n\n要设置提醒，请使用：/alert <收藏品> <价格>",
-    "max_alerts": "❌ 您已达到10个提醒的最大限制。请在添加新提醒之前删除现有提醒。",
-    "usage": "用法：/alert <收藏品> <目标价格>\n示例：/alert cryptopunks 50",
+    "no_alerts": "📭 您没有活跃的价格提醒。\n\n💡 要设置提醒，请使用：/alert <收藏品> <价格>",
+    "max_alerts": "⚠️ 您已达到10个提醒的最大限制。请在添加新提醒之前删除现有提醒。",
+    "usage": "💡 用法：/alert <收藏品> <目标价格>\n📝 示例：/alert cryptopunks 50",
     "set_success": "✅ 已为 {collection} 设置 {price} ETH 的提醒",
     "set_error": "❌ 设置提醒时出错。请重试。",
-    "list_header": "您的活跃提醒：\n\n",
+    "list_header": "📋 您的活跃提醒：\n\n",
     "alert_item": "{index}. {collection} - {price} ETH\n",
-    "remove_usage_old": "要删除提醒，请使用：/remove_alert <编号>"
+    "remove_usage_old": "💡 要删除提醒，请使用：/remove_alert <编号>",
+    "success": "✅ 提醒配置成功！",
+    "processing": "⏳ 正在处理您的提醒..."
   },
   "language": {
     "current": "当前语言：中文 🇨🇳",
@@ -71,8 +128,12 @@
     }
   },
   "errors": {
-    "general": "⚠️ 发生意外错误。请稍后重试。",
-    "api_error": "⚠️ 服务暂时不可用。请稍后重试。",
+    "general": "❌ 出现错误。请重试。",
+    "api_error": "🔌 API错误。请稍后重试。",
+    "not_found": "🔍 未找到收藏品。",
+    "invalid_input": "⚠️ 输入无效。请检查您的命令。",
+    "network_error": "🌐 网络错误。请检查您的连接。",
+    "timeout": "⏰ 请求超时。请重试。",
     "invalid_command": "❌ 无效命令。使用 /help 查看可用命令。"
   },
   "common": {
@@ -83,5 +144,233 @@
     "back": "返回",
     "next": "下一个",
     "previous": "上一个"
+  },
+  "onboarding": {
+    "quick_tutorial": {
+      "title": "🎯 快速教程",
+      "step1": "1️⃣ 查询价格：/price [收藏品名称]",
+      "step2": "2️⃣ 查看排行：/rankings",
+      "step3": "3️⃣ 设置提醒：/alert [收藏品] [价格]",
+      "step4": "4️⃣ 更改语言：/language"
+    },
+    "quick_actions": {
+      "title": "⚡ 快速操作",
+      "popular_collections": "📈 热门收藏品",
+      "top_rankings": "🏆 排行榜",
+      "setup_alerts": "🔔 设置提醒",
+      "help_guide": "❓ 帮助指南"
+    }
+  },
+  "popular_collections": {
+    "title": "📈 热门NFT收藏品",
+    "subtitle": "探索最受欢迎和高交易量的收藏品",
+    "view_price": "💰 查看价格",
+    "set_alert": "🔔 设置提醒",
+    "tags": {
+      "blue_chip": "🔵 蓝筹",
+      "trending": "🔥 热门",
+      "high_volume": "📊 高交易量",
+      "recommended": "⭐ 推荐",
+      "new_project": "🆕 新项目"
+    },
+    "curated_list": {
+      "cryptopunks": {
+        "name": "CryptoPunks",
+        "description": "原创NFT收藏品 - 10,000个独特的像素艺术角色",
+        "tags": ["blue_chip", "high_volume"]
+      },
+      "bored-ape-yacht-club": {
+        "name": "Bored Ape Yacht Club",
+        "description": "独家会员俱乐部，拥有独特的猿猴头像",
+        "tags": ["blue_chip", "recommended"]
+      },
+      "mutant-ape-yacht-club": {
+        "name": "Mutant Ape Yacht Club",
+        "description": "原版无聊猿的变异版本",
+        "tags": ["trending", "high_volume"]
+      },
+      "azuki": {
+        "name": "Azuki",
+        "description": "动漫风格头像，具有独特特征和故事情节",
+        "tags": ["trending", "recommended"]
+      },
+      "doodles-official": {
+        "name": "Doodles",
+        "description": "色彩丰富的手绘角色，个性鲜明",
+        "tags": ["blue_chip", "trending"]
+      },
+      "otherdeed-for-otherdeeds": {
+        "name": "Otherdeeds for Otherlands",
+        "description": "即将到来的Otherside元宇宙虚拟土地NFT",
+        "tags": ["trending", "high_volume"]
+      },
+      "clonex": {
+        "name": "CloneX",
+        "description": "RTFKT Studios的下一代头像，现由Nike拥有",
+        "tags": ["blue_chip", "recommended"]
+      },
+      "moonbirds": {
+        "name": "Moonbirds",
+        "description": "具有实用功能的PFP，特色是具有丰富特征的猫头鹰",
+        "tags": ["blue_chip", "trending"]
+      },
+      "veefriends": {
+        "name": "VeeFriends",
+        "description": "Gary Vaynerchuk手绘角色收藏品",
+        "tags": ["trending", "recommended"]
+      },
+      "world-of-women-nft": {
+        "name": "World of Women",
+        "description": "通过多样化女性头像庆祝代表性",
+        "tags": ["trending", "recommended"]
+      },
+      "cool-cats-nft": {
+        "name": "Cool Cats",
+        "description": "程序生成的具有独特特征的猫咪",
+        "tags": ["blue_chip", "trending"]
+      },
+      "pudgypenguins": {
+        "name": "Pudgy Penguins",
+        "description": "可爱的企鹅角色，具有不同特征",
+        "tags": ["blue_chip", "recommended"]
+      },
+      "artblocks-curated": {
+        "name": "Art Blocks Curated",
+        "description": "生成艺术平台，展示算法创作",
+        "tags": ["blue_chip", "high_volume"]
+      },
+      "chromie-squiggle-by-snowfro": {
+        "name": "Chromie Squiggle",
+        "description": "Snowfro的标志性生成艺术，Art Blocks的第一个项目",
+        "tags": ["blue_chip", "recommended"]
+      },
+      "meebits": {
+        "name": "Meebits",
+        "description": "Larva Labs（CryptoPunks创作者）的3D体素角色",
+        "tags": ["blue_chip", "trending"]
+      },
+      "sandbox": {
+        "name": "The Sandbox",
+        "description": "玩家可以构建和货币化体验的虚拟世界",
+        "tags": ["trending", "high_volume"]
+      },
+      "decentraland": {
+        "name": "Decentraland",
+        "description": "由以太坊区块链驱动的虚拟现实平台",
+        "tags": ["trending", "high_volume"]
+      },
+      "cryptokitties": {
+        "name": "CryptoKitties",
+        "description": "开启NFT热潮的原创收藏猫咪",
+        "tags": ["blue_chip", "recommended"]
+      },
+      "loot-for-adventurers": {
+        "name": "Loot (for Adventurers)",
+        "description": "随机生成并存储在链上的冒险者装备",
+        "tags": ["trending", "recommended"]
+      },
+      "ens": {
+        "name": "Ethereum Name Service",
+        "description": "以太坊地址的去中心化命名服务",
+        "tags": ["trending", "high_volume"]
+      },
+      "goblintown-wtf": {
+        "name": "goblintown.wtf",
+        "description": "免费铸造的哥布林NFT，无路线图或实用性",
+        "tags": ["trending", "new_project"]
+      },
+      "proof-moonbirds": {
+        "name": "Proof Collective",
+        "description": "NFT收藏家和艺术家的私人集体",
+        "tags": ["blue_chip", "recommended"]
+      },
+      "hashmasks": {
+        "name": "Hashmasks",
+        "description": "具有命名权的数字艺术收藏品",
+        "tags": ["blue_chip", "trending"]
+      },
+      "cyberkongz": {
+        "name": "CyberKongz",
+        "description": "具有收益生成能力的像素化大猩猩",
+        "tags": ["trending", "recommended"]
+      },
+      "deadfellaz": {
+        "name": "Deadfellaz",
+        "description": "后末日世界中的不死角色",
+        "tags": ["trending", "recommended"]
+      },
+      "lazy-lions": {
+        "name": "Lazy Lions",
+        "description": "以独特狮子角色咆哮进入元宇宙",
+        "tags": ["trending", "new_project"]
+      },
+      "creature-world-nft": {
+        "name": "Creature World",
+        "description": "生活在魔法世界中的可爱生物",
+        "tags": ["trending", "new_project"]
+      },
+      "gutter-cat-gang": {
+        "name": "Gutter Cat Gang",
+        "description": "来自贫民窟的街猫，态度十足",
+        "tags": ["trending", "recommended"]
+      },
+      "0n1-force": {
+        "name": "0N1 Force",
+        "description": "动漫风格战士，连接通往元宇宙的桥梁",
+        "tags": ["trending", "recommended"]
+      },
+      "superlative-apes": {
+        "name": "Superlative Apes",
+        "description": "具有增强实用性的猿猴NFT的下一个进化",
+        "tags": ["new_project", "trending"]
+      },
+      "board-ape-kennel-club": {
+        "name": "Bored Ape Kennel Club",
+        "description": "无聊猿游艇俱乐部成员的伴侣犬",
+        "tags": ["blue_chip", "recommended"]
+      }
+    }
+  },
+  "menus": {
+    "main": {
+      "title": "🏠 主菜单",
+      "market_data": "📊 市场数据",
+      "collections": "🎨 收藏品",
+      "alerts": "🔔 提醒",
+      "settings": "⚙️ 设置"
+    },
+    "market_data": {
+      "title": "📊 市场数据",
+      "rankings": "🏆 排行榜",
+      "top_sales": "💎 顶级销售",
+      "trending": "🔥 热门",
+      "back": "⬅️ 返回"
+    },
+    "collections": {
+      "title": "🎨 收藏品",
+      "popular": "📈 热门",
+      "search": "🔍 搜索",
+      "favorites": "⭐ 收藏",
+      "back": "⬅️ 返回"
+    },
+    "alerts": {
+      "title": "🔔 提醒管理",
+      "create": "➕ 创建提醒",
+      "manage": "📝 管理提醒",
+      "settings": "⚙️ 提醒设置",
+      "back": "⬅️ 返回"
+    }
+  },
+  "navigation": {
+    "back": "🔙 返回",
+    "next": "➡️ 下一页",
+    "previous": "⬅️ 上一页",
+    "main_menu": "🏠 主菜单"
+  },
+  "search": {
+    "instructions": "🔍 <b>搜索收藏品</b>\n\n要搜索特定的NFT收藏品，只需输入：\n\n<code>/price [收藏品名称]</code>\n\n例如：\n• <code>/price bored ape</code>\n• <code>/price cryptopunks</code>\n• <code>/price azuki</code>\n\n机器人将找到该收藏品并显示当前底价和市场数据！"
+  },
+  "quick_access": {
+    "title": "⚡ <b>快速访问收藏品</b>\n\n选择一个热门收藏品查看其当前市场数据："
   }
 }
