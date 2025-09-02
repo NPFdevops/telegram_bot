@@ -51,7 +51,8 @@ OPENSEA_API_URL = os.getenv('OPENSEA_API_URL', 'https://api.opensea.io/api/v1')
 # Heroku Configuration
 PORT = int(os.getenv('PORT', 8443))
 HEROKU_APP_NAME = os.getenv('HEROKU_APP_NAME')
-WEBHOOK_URL = f'https://{HEROKU_APP_NAME}.herokuapp.com' if HEROKU_APP_NAME else None
+# Use the actual Heroku app URL
+WEBHOOK_URL = 'https://nftpf-bot-7d6ac2de74b3.herokuapp.com' if HEROKU_APP_NAME else None
 
 
 # Command Handlers
