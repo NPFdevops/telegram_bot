@@ -1566,23 +1566,28 @@ def main() -> None:
         # Log bot startup
         logger.info("Bot is starting...")
         
-        # Check if running on Heroku (webhook mode) or locally (polling mode)
-        if WEBHOOK_URL and HEROKU_APP_NAME:
-            logger.info(f"Starting bot in webhook mode on port {PORT}")
-            logger.info(f"Webhook URL: {WEBHOOK_URL}")
-            
-            # Start webhook
-            application.run_webhook(
-                listen="0.0.0.0",
-                port=PORT,
-                url_path="/webhook",
-                webhook_url=f"{WEBHOOK_URL}webhook",
-                drop_pending_updates=True
-            )
-        else:
-            logger.info("Starting bot in polling mode (local development)")
-            # Run the bot until the user presses Ctrl-C
-            application.run_polling(drop_pending_updates=True)
+        # Temporarily use polling mode to avoid webhook DNS issues
+        logger.info("Starting bot in polling mode (temporary fix for webhook DNS issues)")
+        # Run the bot until the user presses Ctrl-C
+        application.run_polling(drop_pending_updates=True)
+        
+        # TODO: Re-enable webhook mode once DNS issues are resolved
+        # if WEBHOOK_URL and HEROKU_APP_NAME:
+        #     logger.info(f"Starting bot in webhook mode on port {PORT}")
+        #     logger.info(f"Webhook URL: {WEBHOOK_URL}")
+        #     
+        #     # Start webhook
+        #     application.run_webhook(
+        #         listen="0.0.0.0",
+        #         port=PORT,
+        #         url_path="/webhook",
+        #         webhook_url=f"{WEBHOOK_URL}/webhook",
+        #         drop_pending_updates=True
+        #     )
+        # else:
+        #     logger.info("Starting bot in polling mode (local development)")
+        #     # Run the bot until the user presses Ctrl-C
+        #     application.run_polling(drop_pending_updates=True)
         
     except Exception as e:
         logger.error(f"Failed to start bot: {e}")
