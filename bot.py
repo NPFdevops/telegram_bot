@@ -1566,28 +1566,22 @@ def main() -> None:
         # Log bot startup
         logger.info("Bot is starting...")
         
-        # Temporarily use polling mode to avoid webhook DNS issues
-        logger.info("Starting bot in polling mode (temporary fix for webhook DNS issues)")
-        # Run the bot until the user presses Ctrl-C
-        application.run_polling(drop_pending_updates=True)
-        
-        # TODO: Re-enable webhook mode once DNS issues are resolved
-        # if WEBHOOK_URL and HEROKU_APP_NAME:
-        #     logger.info(f"Starting bot in webhook mode on port {PORT}")
-        #     logger.info(f"Webhook URL: {WEBHOOK_URL}")
-        #     
-        #     # Start webhook
-        #     application.run_webhook(
-        #         listen="0.0.0.0",
-        #         port=PORT,
-        #         url_path="/webhook",
-        #         webhook_url=f"{WEBHOOK_URL}/webhook",
-        #         drop_pending_updates=True
-        #     )
-        # else:
-        #     logger.info("Starting bot in polling mode (local development)")
-        #     # Run the bot until the user presses Ctrl-C
-        #     application.run_polling(drop_pending_updates=True)
+        if HEROKU_APP_NAME:
+            logger.info(f"Starting bot in hybrid mode (polling + web server) on port {PORT}")
+            # Run both polling and a simple web server for Heroku
+            # This satisfies Heroku's requirement to bind to PORT while using polling for updates
+            application.run_webhook(
+                listen="0.0.0.0",
+                port=PORT,
+                url_path="/health",  # Simple health check endpoint
+                webhook_url=None,  # No webhook, just web server
+                drop_pending_updates=True,
+                poll_interval=1.0  # Enable polling
+            )
+        else:
+            logger.info("Starting bot in polling mode (local development)")
+            # Run the bot until the user presses Ctrl-C
+            application.run_polling(drop_pending_updates=True)
         
     except Exception as e:
         logger.error(f"Failed to start bot: {e}")
