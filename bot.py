@@ -848,7 +848,7 @@ async def show_collection_search(query, user_id: int) -> None:
         back_button_text = get_text(user_id, 'navigation.back')
         
         keyboard = [
-            [InlineKeyboardButton(back_button_text, callback_data='main_menu')]
+            [InlineKeyboardButton(back_button_text, callback_data='back_to_main')]
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
         
