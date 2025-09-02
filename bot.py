@@ -7,6 +7,7 @@ This bot includes basic commands and proper error handling.
 """
 
 import logging
+import os
 from telegram import Update
 from telegram.ext import Application, CommandHandler, ContextTypes, CallbackQueryHandler
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
@@ -15,6 +16,10 @@ import aiohttp
 import json
 from typing import Optional, Dict, Any
 import ssl
+from dotenv import load_dotenv
+
+# Load environment variables from .env file (for local development)
+load_dotenv()
 
 # Import language utilities
 from language_utils import (
@@ -30,13 +35,23 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Configuration
-BOT_TOKEN = "7556351017:AAHjwbA1vN_k6AJGQcM3jnR6-pXgBVperOk"
+# Configuration - Load from environment variables
+BOT_TOKEN = os.getenv('BOT_TOKEN')
+if not BOT_TOKEN:
+    raise ValueError("BOT_TOKEN environment variable is required")
 
 # NFT API Configuration
-NFTPF_API_HOST = "nftpf-api-v0.p.rapidapi.com"
-NFTPF_API_KEY = "7c50a84629msh50acacfc84ff5ebp1b3c3ajsn9fa81ab704f6"
-OPENSEA_API_URL = "https://api.opensea.io/api/v1"
+NFTPF_API_HOST = os.getenv('NFTPF_API_HOST', 'nftpf-api-v0.p.rapidapi.com')
+NFTPF_API_KEY = os.getenv('NFTPF_API_KEY')
+if not NFTPF_API_KEY:
+    raise ValueError("NFTPF_API_KEY environment variable is required")
+
+OPENSEA_API_URL = os.getenv('OPENSEA_API_URL', 'https://api.opensea.io/api/v1')
+
+# Heroku Configuration
+PORT = int(os.getenv('PORT', 8443))
+HEROKU_APP_NAME = os.getenv('HEROKU_APP_NAME')
+WEBHOOK_URL = f'https://{HEROKU_APP_NAME}.herokuapp.com/' if HEROKU_APP_NAME else None
 
 
 # Command Handlers
@@ -1524,6 +1539,7 @@ async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE) -> N
 def main() -> None:
     """
     Main function to initialize and run the bot.
+    Supports both polling (local) and webhook (Heroku) modes.
     """
     try:
         # Create the Application
@@ -1549,12 +1565,28 @@ def main() -> None:
         # Log bot startup
         logger.info("Bot is starting...")
         
-        # Run the bot until the user presses Ctrl-C
-        application.run_polling(drop_pending_updates=True)
+        # Check if running on Heroku (webhook mode) or locally (polling mode)
+        if WEBHOOK_URL and HEROKU_APP_NAME:
+            logger.info(f"Starting bot in webhook mode on port {PORT}")
+            logger.info(f"Webhook URL: {WEBHOOK_URL}")
+            
+            # Start webhook
+            application.run_webhook(
+                listen="0.0.0.0",
+                port=PORT,
+                url_path="",
+                webhook_url=WEBHOOK_URL,
+                drop_pending_updates=True
+            )
+        else:
+            logger.info("Starting bot in polling mode (local development)")
+            # Run the bot until the user presses Ctrl-C
+            application.run_polling(drop_pending_updates=True)
         
     except Exception as e:
         logger.error(f"Failed to start bot: {e}")
         print(f"Error starting bot: {e}")
+        raise
 
 
 if __name__ == '__main__':

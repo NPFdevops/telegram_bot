@@ -1,0 +1,54 @@
+{
+  "name": "NFT Telegram Bot",
+  "description": "A comprehensive NFT-focused Telegram bot providing real-time collection data, price tracking, rankings, and alert management.",
+  "repository": "https://github.com/your-username/nft-telegram-bot",
+  "logo": "https://node-js-sample.herokuapp.com/node.png",
+  "keywords": ["telegram", "bot", "nft", "crypto", "python"],
+  "image": "heroku/python",
+  "buildpacks": [
+    {
+      "url": "heroku/python"
+    }
+  ],
+  "formation": {
+    "worker": {
+      "quantity": 1,
+      "size": "eco"
+    }
+  },
+  "env": {
+    "BOT_TOKEN": {
+      "description": "Telegram Bot Token from @BotFather",
+      "required": true
+    },
+    "NFTPF_API_KEY": {
+      "description": "NFTPriceFloor API Key from RapidAPI",
+      "required": true
+    },
+    "HEROKU_APP_NAME": {
+      "description": "Name of your Heroku app (for webhook URL generation)",
+      "required": true
+    },
+    "NFTPF_API_HOST": {
+      "description": "NFTPriceFloor API Host",
+      "value": "nftpf-api-v0.p.rapidapi.com",
+      "required": false
+    },
+    "OPENSEA_API_URL": {
+      "description": "OpenSea API URL",
+      "value": "https://api.opensea.io/api/v1",
+      "required": false
+    }
+  },
+  "addons": [],
+  "scripts": {
+    "postdeploy": "echo 'Bot deployed successfully! Make sure to set your webhook URL in Telegram.'"
+  },
+  "environments": {
+    "test": {
+      "scripts": {
+        "test": "python -m pytest"
+      }
+    }
+  }
+}
