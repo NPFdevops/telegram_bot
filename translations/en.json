@@ -468,6 +468,26 @@
         "name": "Art Blocks Curated",
         "description": "Generative art platform with curated collections",
         "tags": ["blue_chip", "recommended"]
+      },
+      "pudgypenguins": {
+        "name": "Pudgy Penguins",
+        "description": "Adorable penguin characters with varying traits",
+        "tags": ["blue_chip", "recommended"]
+      },
+      "artblocks-curated": {
+        "name": "Art Blocks Curated",
+        "description": "Generative art platform featuring algorithmic creations",
+        "tags": ["blue_chip", "high_volume"]
+      },
+      "chromie-squiggle-by-snowfro": {
+        "name": "Chromie Squiggle",
+        "description": "Iconic generative art by Snowfro, Art Blocks' first project",
+        "tags": ["blue_chip", "recommended"]
+      },
+      "meebits": {
+        "name": "Meebits",
+        "description": "3D voxel characters by Larva Labs (CryptoPunks creators)",
+        "tags": ["blue_chip", "trending"]
       }
     }
   },

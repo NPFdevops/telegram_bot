@@ -350,6 +350,26 @@
         "name": "Bored Ape Kennel Club",
         "description": "无聊猿游艇俱乐部成员的伴侣犬",
         "tags": ["blue_chip", "recommended"]
+      },
+      "pudgypenguins": {
+        "name": "Pudgy Penguins",
+        "description": "可爱的企鹅角色，具有不同的特征",
+        "tags": ["blue_chip", "recommended"]
+      },
+      "artblocks-curated": {
+        "name": "Art Blocks Curated",
+        "description": "生成艺术平台，具有算法创作",
+        "tags": ["blue_chip", "high_volume"]
+      },
+      "chromie-squiggle-by-snowfro": {
+        "name": "Chromie Squiggle",
+        "description": "Snowfro的标志性生成艺术，Art Blocks的第一个项目",
+        "tags": ["blue_chip", "recommended"]
+      },
+      "meebits": {
+        "name": "Meebits",
+        "description": "Larva Labs（CryptoPunks创造者）的3D体素角色",
+        "tags": ["blue_chip", "trending"]
       }
     }
   },

@@ -351,6 +351,26 @@
         "name": "Bored Ape Kennel Club",
         "description": "Perros compañeros para miembros del Bored Ape Yacht Club",
         "tags": ["blue_chip", "recommended"]
+      },
+      "pudgypenguins": {
+        "name": "Pudgy Penguins",
+        "description": "Adorables personajes de pingüinos con rasgos variados",
+        "tags": ["blue_chip", "recommended"]
+      },
+      "artblocks-curated": {
+        "name": "Art Blocks Curated",
+        "description": "Plataforma de arte generativo con creaciones algorítmicas",
+        "tags": ["blue_chip", "high_volume"]
+      },
+      "chromie-squiggle-by-snowfro": {
+        "name": "Chromie Squiggle",
+        "description": "Arte generativo icónico por Snowfro, primer proyecto de Art Blocks",
+        "tags": ["blue_chip", "recommended"]
+      },
+      "meebits": {
+        "name": "Meebits",
+        "description": "Personajes voxel 3D por Larva Labs (creadores de CryptoPunks)",
+        "tags": ["blue_chip", "trending"]
       }
     }
   },
