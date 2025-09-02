@@ -15,7 +15,7 @@ from telegram.error import TelegramError
 
 from user_storage import get_all_digest_users
 from language_utils import get_text, get_user_language
-from api_client import fetch_nftpf_projects
+from cached_api import fetch_nftpf_projects_cached
 
 logger = logging.getLogger(__name__)
 
@@ -125,7 +125,7 @@ class DigestScheduler:
         """Generate daily digest content for a user."""
         try:
             # Fetch top 10 collections for comprehensive digest
-            rankings_data = await fetch_nftpf_projects(offset=0, limit=10)
+            rankings_data = await fetch_nftpf_projects_cached(offset=0, limit=10)
             
             if not rankings_data:
                 return None

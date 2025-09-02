@@ -8,7 +8,30 @@
       "step2": "**步骤 2：** 🏆 浏览排行榜\n使用 `/rankings` 查看按交易量排名的热门收藏",
       "step3": "**步骤 3：** 🔔 设置价格提醒\n使用 `/alerts add cryptopunks 50` 获取通知",
       "step4": "**步骤 4：** 🌍 选择您的语言\n使用 `/language` 切换语言",
-      "complete": "🎉 一切就绪！尝试任何命令开始使用。"
+      "complete": "🎉 一切就绪！尝试任何命令开始使用。",
+      "interactive": {
+        "welcome": "🎓 **欢迎使用 NFT Market Insights！**\n\n让我们进行一个快速的互动导览来帮助您开始！只需要2分钟！\n\n✨ **您将学到：**\n• 如何查看底价\n• 浏览热门收藏\n• 设置价格提醒\n• 导航机器人\n\n准备开始了吗？",
+        "step1_title": "📊 **步骤 1：查看底价**",
+        "step1_desc": "底价显示收藏中任何NFT的最低价格。这对于跟踪价值至关重要！\n\n💡 **现在试试：** 点击下面的按钮查看CryptoPunks底价。",
+        "step1_completed": "✅ **太棒了！** 您刚刚查看了底价！\n\n注意您获得了：\n• 当前底价\n• 24小时变化百分比\n• 更多详情的直接链接\n\n准备下一步了吗？",
+        "step2_title": "🏆 **步骤 2：浏览排行榜**",
+        "step2_desc": "排行榜显示按交易量排名的最热门NFT收藏，帮助您发现趋势。\n\n💡 **现在试试：** 点击下面查看热门收藏。",
+        "step2_completed": "✅ **太棒了！** 您探索了排行榜！\n\n您可以：\n• 查看按交易量排名的热门收藏\n• 浏览页面\n• 获取任何收藏的详细信息\n\n让我们继续！",
+        "step3_title": "🔔 **步骤 3：设置价格提醒**",
+        "step3_desc": "价格提醒会在收藏达到您的目标价格时通知您。您最多可以设置10个提醒！\n\n💡 **现在试试：** 让我们设置一个提醒。",
+        "step3_completed": "✅ **完美！** 您已经了解了提醒功能！\n\n记住：\n• 每个用户最多10个提醒\n• 获得即时通知\n• 随时使用 /alerts 管理提醒\n\n还有一步！",
+        "step4_title": "🌍 **步骤 4：语言和设置**",
+        "step4_desc": "自定义您的体验！机器人支持多种语言和各种设置。\n\n💡 **现在试试：** 查看语言选项。",
+        "step4_completed": "✅ **太棒了！** 您已经探索了设置！\n\n您可以：\n• 随时切换语言\n• 自定义您的体验\n• 在需要时获取帮助\n\n您已准备好进行最后一步！",
+        "final_title": "🎉 **教程完成！**",
+        "final_desc": "恭喜！您现在已经准备好像专业人士一样使用NFT Market Insights机器人了！\n\n🚀 **快速回顾：**\n• `/price [收藏]` - 查看底价\n• `/rankings` - 浏览热门收藏\n• `/alerts` - 管理价格提醒\n• `/language` - 更改语言\n• `/help` - 随时获取帮助\n\n**专业提示：** 使用菜单按钮快速访问所有功能！\n\n交易愉快！📈",
+        "skip_tutorial": "⏭️ 跳过教程",
+        "next_step": "➡️ 下一步",
+        "try_feature": "🔥 试用此功能",
+        "continue": "✅ 继续",
+        "finish_tutorial": "🎯 完成教程",
+        "back_to_menu": "🏠 返回菜单"
+      }
     },
     "quick_actions": {
       "title": "🚀 **快速操作**",
@@ -117,6 +140,17 @@
       "page_info": "第 {current} 页，共 {total} 页"
     }
   },
+  "top_sales": {
+    "title": "💎 **顶级NFT销售**\n\n",
+    "loading": "⏳ 正在加载顶级销售...",
+    "error": "❌ 获取销售数据时出错。请稍后重试。",
+    "no_data": "❌ 目前没有可用的销售数据。",
+    "success": "✅ 顶级销售加载成功！",
+    "footer": "🔄 *数据来自NFTPriceFloor API*",
+    "item": "{rank}. **{collection}** #{token_id}\n   💰 销售价格：{price} ETH (${usd})\n   🕒 {time_ago}\n",
+    "refresh_button": "🔄 刷新",
+    "view_more": "👀 查看更多销售"
+  },
   "alerts": {
     "help": "🔔 **NFT价格提醒**\n\n**命令：**\n`/alerts list` - 查看您的活跃提醒\n`/alerts add <收藏品> <价格>` - 添加价格提醒\n`/alerts remove <id>` - 按ID删除提醒\n\n**示例：**\n`/alerts add cryptopunks 50` - 当CryptoPunks地板价达到50 ETH时提醒\n`/alerts add bored-ape-yacht-club 30` - BAYC达到30 ETH时提醒\n\n💡 *提醒每小时检查一次价格*",
     "list_empty": "📋 **您的活跃提醒**\n\n🔄 未找到活跃提醒。\n\n使用 `/alerts add <收藏品> <价格>` 创建您的第一个提醒！",
@@ -165,7 +199,13 @@
     "cancel": "取消",
     "back": "返回",
     "next": "下一个",
-    "previous": "上一个"
+    "previous": "上一个",
+    "network_error": "🌐 网络连接错误。请检查网络连接后重试。",
+    "api_error": "🔧 服务暂时不可用。请几分钟后重试。",
+    "timeout_error": "⏱️ 请求超时。请重试。",
+    "rate_limit_error": "⏳ 请求过于频繁。请稍等片刻后重试。",
+    "invalid_input": "❌ 输入无效。请检查命令后重试。",
+    "not_found_error": "🔍 未找到请求的数据。请验证收藏品名称。"
   },
   "onboarding": {
     "quick_tutorial": {
@@ -410,7 +450,43 @@
     "main_menu": "🏠 主菜单"
   },
   "search": {
-    "instructions": "🔍 <b>搜索收藏品</b>\n\n要搜索特定的NFT收藏品，只需输入：\n\n<code>/price [收藏品名称]</code>\n\n例如：\n• <code>/price bored ape</code>\n• <code>/price cryptopunks</code>\n• <code>/price azuki</code>\n\n机器人将找到该收藏品并显示当前底价和市场数据！"
+    "instructions": "🔍 <b>搜索收藏品</b>\n\n要搜索特定的NFT收藏品，只需输入：\n\n<code>/price [收藏品名称]</code>\n\n例如：\n• <code>/price bored ape</code>\n• <code>/price cryptopunks</code>\n• <code>/price azuki</code>\n\n机器人将找到该收藏品并显示当前底价和市场数据！",
+    "advanced": {
+      "title": "🔍 **高级搜索**\n\n使用强大的过滤器和建议查找NFT收藏品。",
+      "filters": {
+        "title": "🎛️ **搜索过滤器**",
+        "category": "📂 类别",
+        "price_range": "💰 价格范围",
+        "volume_range": "📊 交易量范围",
+        "trending": "🔥 仅热门",
+        "blue_chip": "💎 仅蓝筹",
+        "new_projects": "🆕 新项目"
+      },
+      "suggestions": {
+        "title": "💡 **搜索建议**",
+        "popular_searches": "热门搜索：",
+        "recent_searches": "您的最近搜索：",
+        "trending_collections": "热门收藏品：",
+        "no_recent": "没有最近搜索"
+      },
+      "results": {
+        "found": "✅ 找到 {count} 个与 '{query}' 匹配的收藏品",
+        "no_results": "❌ 未找到与 '{query}' 相关的收藏品",
+        "suggestions_text": "💡 您是否想要：",
+        "try_different": "尝试不同的搜索词或使用过滤器"
+      },
+      "buttons": {
+        "apply_filters": "🎛️ 应用过滤器",
+        "clear_filters": "🗑️ 清除过滤器",
+        "search_again": "🔍 重新搜索",
+        "view_suggestions": "💡 查看建议"
+      }
+    },
+    "quick_search": {
+      "placeholder": "输入收藏品名称...",
+      "searching": "🔍 正在搜索 '{query}'...",
+      "found_multiple": "找到多个匹配项。请选择一个："
+    }
   },
   "quick_access": {
     "title": "⚡ <b>快速访问收藏品</b>\n\n选择一个热门收藏品查看其当前市场数据："
@@ -484,7 +560,19 @@
     }
   },
   "navigation": {
-    "back": "⬅️ 返回"
+    "next": "➡️ 下一页",
+    "previous": "⬅️ 上一页",
+    "back": "⬅️ 返回",
+    "back_to_menu": "🏠 返回菜单",
+    "page_info": "第 {current} 页，共 {total} 页"
+  },
+  "search": {
+    "placeholder": "搜索收藏品...",
+    "no_results": "未找到结果",
+    "searching": "🔍 搜索中...",
+    "results_found": "找到 {count} 个结果",
+    "suggestions": "您是否想要搜索？",
+    "try_again": "请尝试其他搜索词"
   },
   "common": {
     "back": "⬅️ 返回",

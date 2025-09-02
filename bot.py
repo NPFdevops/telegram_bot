@@ -27,6 +27,13 @@ from language_utils import (
     get_language_options_keyboard, detect_user_language_from_telegram,
     SUPPORTED_LANGUAGES
 )
+from error_handler import handle_command_error, log_user_action
+from cached_api import (
+    fetch_nftpf_projects_cached, fetch_nftpf_project_by_slug_cached,
+    search_nftpf_collection_cached, fetch_top_sales_cached,
+    fetch_rankings_cached, warm_cache, get_cache_stats, clear_cache
+)
+from cache_manager import init_cache, cleanup_cache
 
 # Configure logging
 logging.basicConfig(
@@ -56,10 +63,34 @@ WEBHOOK_URL = 'https://nftpf-bot-7d6ac2de74b3.herokuapp.com' if HEROKU_APP_NAME 
 
 
 # Command Handlers
+def get_main_menu_keyboard(user_id: int) -> list:
+    """
+    Get the standardized main menu keyboard layout matching the specified design.
+    """
+    return [
+        [
+            InlineKeyboardButton('🏆 Rankings', callback_data='main_rankings'),
+            InlineKeyboardButton('🔍 Search', callback_data='main_search')
+        ],
+        [
+            InlineKeyboardButton('💰 Top Sales', callback_data='main_top_sales'),
+            InlineKeyboardButton('🔥 Popular', callback_data='main_popular')
+        ],
+        [
+            InlineKeyboardButton('🚨 Alerts', callback_data='main_alerts'),
+            InlineKeyboardButton('📊 Digest', callback_data='main_digest')
+        ],
+        [
+            InlineKeyboardButton('🌐 Language', callback_data='main_language'),
+            InlineKeyboardButton('❓ Help', callback_data='main_help')
+        ]
+    ]
+
+
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """
     Handle the /start command.
-    Sends a welcome message with interactive quick actions.
+    Sends a welcome message with interactive quick actions matching the specified design.
     """
     try:
         user = update.effective_user
@@ -70,24 +101,35 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
             detected_lang = detect_user_language_from_telegram(user)
             set_user_language(user.id, detected_lang)
         
-        # Get welcome message in user's language
-        welcome_message = get_text(user.id, 'welcome.greeting', name=user.first_name)
+        # Check if user is new (hasn't completed tutorial)
+        is_new_user = not is_tutorial_completed(user.id)
         
-        # Create main menu buttons
-        keyboard = [
-            [
-                InlineKeyboardButton('🏆 Top Rankings', callback_data='main_rankings'),
-                InlineKeyboardButton('🔍 Search Collection', callback_data='main_search')
-            ],
-            [
-                InlineKeyboardButton('📊 Daily Digest', callback_data='menu_digest'),
-                InlineKeyboardButton('⚙️ More Options', callback_data='more_options')
+        if is_new_user:
+            # Start tutorial for new users
+            start_tutorial(user.id)
+            welcome_message = get_text(user.id, 'tutorial.interactive.welcome')
+            
+            keyboard = [
+                [InlineKeyboardButton(get_text(user.id, 'tutorial.interactive.next_step'), callback_data='tutorial_step_1')],
+                [InlineKeyboardButton(get_text(user.id, 'tutorial.interactive.skip_tutorial'), callback_data='tutorial_skip')]
             ]
-        ]
-        reply_markup = InlineKeyboardMarkup(keyboard)
+            reply_markup = InlineKeyboardMarkup(keyboard)
+            
+            await update.message.reply_text(welcome_message, reply_markup=reply_markup, parse_mode='Markdown')
+            
+            # Log tutorial start
+            log_user_action(user.id, 'tutorial_started', {'language': get_user_language(user.id)})
+        else:
+            # Create the welcome message matching the image design
+            user_name = user.first_name or "Dave Joga"
+            welcome_message = f"🤖 Hello {user_name}!\n\nWelcome to NFT Market Insights Bot! I'm here to help you track NFT collections, set price alerts, and stay updated with the latest market trends.\n\n✨ **Let's get you started:**\n\n🎯 **Quick Actions:**\n• 💰 Check floor prices\n• 🏆 Browse top collections\n• 🔔 Set price alerts\n• 🌍 Change language\n\nChoose an option below or use /help for all commands!"
+            
+            # Use the standardized main menu
+            keyboard = get_main_menu_keyboard(user.id)
+            reply_markup = InlineKeyboardMarkup(keyboard)
+            await update.message.reply_text(welcome_message, reply_markup=reply_markup, parse_mode='Markdown')
         
-        await update.message.reply_text(welcome_message, reply_markup=reply_markup, parse_mode='Markdown')
-        logger.info(f"User {user.id} ({user.username}) started the bot")
+        logger.info(f"User {user.id} ({user.username}) started the bot - New user: {is_new_user}")
     except Exception as e:
         logger.error(f"Error in start_command: {e}")
         error_message = get_text(user.id, 'errors.general') if 'user' in locals() else "Sorry, something went wrong. Please try again later."
@@ -97,36 +139,22 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
 # NFT API Helper Functions
 async def fetch_nftpf_project_by_slug(slug: str) -> Optional[Dict[str, Any]]:
     """
-    Fetch a specific NFT project by slug from NFTPriceFloor API.
+    Fetch a specific NFT project by slug from NFTPriceFloor API with caching.
     """
-    try:
-        connector = aiohttp.TCPConnector(ssl=ssl.create_default_context())
-        async with aiohttp.ClientSession(connector=connector) as session:
-            url = f"https://{NFTPF_API_HOST}/projects/{slug}"
-            headers = {
-                'x-rapidapi-key': NFTPF_API_KEY,
-                'x-rapidapi-host': NFTPF_API_HOST
-            }
-            
-            async with session.get(url, headers=headers) as response:
-                if response.status == 200:
-                    data = await response.json()
-                    return data
-                else:
-                    logger.warning(f"NFTPriceFloor API request failed with status {response.status}")
-                    return None
-    except Exception as e:
-        logger.error(f"Error fetching NFTPriceFloor project: {e}")
-        return None
+    return await fetch_nftpf_project_by_slug_cached(slug)
 
 
-async def search_nftpf_collection(collection_name: str) -> Optional[Dict[str, Any]]:
+async def search_nftpf_collection(collection_name: str, user_id: int = None, filters: Dict[str, Any] = None) -> Optional[Dict[str, Any]]:
     """
-    Search for a specific NFT collection by name from NFTPriceFloor API.
+    Search for a specific NFT collection by name from NFTPriceFloor API with advanced filtering.
     """
     try:
+        # Add search to history if user_id provided
+        if user_id:
+            add_search_to_history(user_id, collection_name)
+        
         # First get all projects and search for the collection
-        collections_data = await fetch_nftpf_projects(offset=0, limit=200)
+        collections_data = await fetch_nftpf_projects_cached(offset=0, limit=200)
         
         if not collections_data:
             logger.warning("No collections data received from API")
@@ -135,6 +163,10 @@ async def search_nftpf_collection(collection_name: str) -> Optional[Dict[str, An
         # Handle both 'data' and 'projects' keys for API response compatibility
         projects = collections_data.get('data', collections_data.get('projects', []))
         logger.info(f"Searching through {len(projects)} projects for '{collection_name}'")
+        
+        # Apply filters if provided
+        if filters:
+            projects = _apply_search_filters(projects, filters)
         
         # Search for collection by name (case-insensitive)
         collection_name_lower = collection_name.lower().strip()
@@ -146,7 +178,7 @@ async def search_nftpf_collection(collection_name: str) -> Optional[Dict[str, An
                 logger.info(f"Found exact match: {project.get('name')}")
                 slug = project.get('slug')
                 if slug:
-                    detailed_data = await fetch_nftpf_project_by_slug(slug)
+                    detailed_data = await fetch_nftpf_project_by_slug_cached(slug)
                     if detailed_data:
                         return detailed_data
                 return project
@@ -162,7 +194,7 @@ async def search_nftpf_collection(collection_name: str) -> Optional[Dict[str, An
                 logger.info(f"Found partial match: {project.get('name')}")
                 slug = project.get('slug')
                 if slug:
-                    detailed_data = await fetch_nftpf_project_by_slug(slug)
+                    detailed_data = await fetch_nftpf_project_by_slug_cached(slug)
                     if detailed_data:
                         return detailed_data
                 return project
@@ -173,6 +205,170 @@ async def search_nftpf_collection(collection_name: str) -> Optional[Dict[str, An
     except Exception as e:
         logger.error(f"Error searching NFT collection: {e}")
         return None
+
+
+def _apply_search_filters(projects: list, filters: Dict[str, Any]) -> list:
+    """
+    Apply search filters to the list of projects.
+    """
+    filtered_projects = projects
+    
+    # Filter by category
+    if filters.get('category'):
+        category = filters['category'].lower()
+        filtered_projects = [p for p in filtered_projects if categorize_collection(p).lower() == category]
+    
+    # Filter by price range
+    if filters.get('min_price') is not None or filters.get('max_price') is not None:
+        min_price = filters.get('min_price', 0)
+        max_price = filters.get('max_price', float('inf'))
+        filtered_projects = [
+            p for p in filtered_projects 
+            if min_price <= float(p.get('floorPrice', 0)) <= max_price
+        ]
+    
+    # Filter by volume range
+    if filters.get('min_volume') is not None or filters.get('max_volume') is not None:
+        min_volume = filters.get('min_volume', 0)
+        max_volume = filters.get('max_volume', float('inf'))
+        filtered_projects = [
+            p for p in filtered_projects 
+            if min_volume <= float(p.get('volume', 0)) <= max_volume
+        ]
+    
+    # Filter by trending (top 50 by volume)
+    if filters.get('trending'):
+        filtered_projects = sorted(
+            filtered_projects, 
+            key=lambda x: float(x.get('volume', 0)), 
+            reverse=True
+        )[:50]
+    
+    # Filter by blue chip (established collections with high volume)
+    if filters.get('blue_chip'):
+        filtered_projects = [
+            p for p in filtered_projects 
+            if float(p.get('volume', 0)) > 100 and float(p.get('floorPrice', 0)) > 1
+        ]
+    
+    # Filter by new projects (created recently)
+    if filters.get('new_projects'):
+        # This would need creation date from API, for now filter by lower volume
+        filtered_projects = [
+            p for p in filtered_projects 
+            if float(p.get('volume', 0)) < 50
+        ]
+    
+    return filtered_projects
+
+
+# Advanced Search Command Handlers
+async def advanced_search_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """
+    Handle the /search command for advanced search functionality.
+    """
+    try:
+        user = update.effective_user
+        
+        if not context.args:
+            # Show advanced search menu
+            await show_advanced_search_menu(update.message, user.id)
+            return
+        
+        # Perform search with query
+        query = " ".join(context.args)
+        await perform_advanced_search(update.message, user.id, query)
+        
+    except Exception as e:
+        await handle_command_error(update, context, e, "advanced_search")
+
+
+async def show_advanced_search_menu(message_or_query, user_id: int) -> None:
+    """
+    Display the advanced search menu with options.
+    """
+    text = get_text(user_id, 'advanced_search.menu_title')
+    
+    # Get user's current filters
+    current_filters = get_user_search_filters(user_id)
+    filter_summary = ""
+    
+    if current_filters:
+        filter_parts = []
+        if current_filters.get('category'):
+            filter_parts.append(f"📂 {current_filters['category']}")
+        if current_filters.get('min_price') or current_filters.get('max_price'):
+            min_p = current_filters.get('min_price', 0)
+            max_p = current_filters.get('max_price', '∞')
+            filter_parts.append(f"💰 {min_p}-{max_p} ETH")
+        if current_filters.get('trending'):
+            filter_parts.append("🔥 Trending")
+        if current_filters.get('blue_chip'):
+            filter_parts.append("💎 Blue Chip")
+        
+        if filter_parts:
+            filter_summary = f"\n\n🔍 **{get_text(user_id, 'advanced_search.active_filters')}:**\n" + "\n".join(filter_parts)
+    
+    text += filter_summary
+    
+    keyboard = [
+        [
+            InlineKeyboardButton(get_text(user_id, 'advanced_search.quick_search'), callback_data="search_quick"),
+            InlineKeyboardButton(get_text(user_id, 'advanced_search.filters'), callback_data="search_filters")
+        ],
+        [
+            InlineKeyboardButton(get_text(user_id, 'advanced_search.suggestions'), callback_data="search_suggestions"),
+            InlineKeyboardButton(get_text(user_id, 'advanced_search.history'), callback_data="search_history")
+        ],
+        [
+            InlineKeyboardButton(get_text(user_id, 'navigation.back'), callback_data="menu_main")
+        ]
+    ]
+    
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    
+    if hasattr(message_or_query, 'edit_text'):
+        await message_or_query.edit_text(text, reply_markup=reply_markup, parse_mode='Markdown')
+    else:
+        await message_or_query.reply_text(text, reply_markup=reply_markup, parse_mode='Markdown')
+
+
+async def perform_advanced_search(message_or_query, user_id: int, query: str, filters: Dict[str, Any] = None) -> None:
+    """
+    Perform advanced search with filters and display results.
+    """
+    try:
+        # Get user filters if not provided
+        if filters is None:
+            filters = get_user_search_filters(user_id)
+        
+        # Send searching message
+        searching_text = f"🔍 {get_text(user_id, 'advanced_search.searching', query=query)}"
+        
+        if hasattr(message_or_query, 'edit_text'):
+            searching_msg = message_or_query
+            await searching_msg.edit_text(searching_text, parse_mode='Markdown')
+        else:
+            searching_msg = await message_or_query.reply_text(searching_text, parse_mode='Markdown')
+        
+        # Perform search
+        collection_data = await search_nftpf_collection(query, user_id, filters)
+        
+        if not collection_data:
+            # Show no results message with suggestions
+            await show_search_no_results(searching_msg, user_id, query)
+            return
+        
+        # Show search results
+        await show_search_results(searching_msg, user_id, collection_data, query)
+        
+    except Exception as e:
+        logger.error(f"Error in advanced search: {e}")
+        error_text = get_text(user_id, 'advanced_search.error')
+        if hasattr(message_or_query, 'edit_text'):
+            await message_or_query.edit_text(error_text, parse_mode='Markdown')
+        else:
+            await message_or_query.reply_text(error_text, parse_mode='Markdown')
 
 
 # NFT Command Handlers
@@ -197,7 +393,7 @@ async def price_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
         searching_msg = await update.message.reply_text(searching_text, parse_mode='Markdown')
         
         # Search for collection data
-        collection_data = await search_nftpf_collection(collection_name)
+        collection_data = await search_nftpf_collection(collection_name, user.id)
         
         if not collection_data:
             not_found_text = get_text(user.id, 'price.not_found', collection=collection_name)
@@ -288,37 +484,103 @@ async def price_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
         response_text += "\n🔄 *Data from NFTPriceFloor API*"
         
         await searching_msg.edit_text(response_text, parse_mode='Markdown')
-        logger.info(f"Price command used for collection '{collection_name}' by user {update.effective_user.id}")
+        log_user_action(update.effective_user.id, "price_command", f"collection: {collection_name}")
         
     except Exception as e:
-        logger.error(f"Error in price_command: {e}")
-        try:
-            user = update.effective_user
-            error_message = get_text(user.id, 'price.error')
-            await update.message.reply_text(error_message)
-        except:
-            pass
+        await handle_command_error(update, context, e, "price_command")
 
 
-# fetch_top_sales function temporarily deactivated
-# async def fetch_top_sales() -> Optional[Dict[str, Any]]:
-#     """
-#     Fetch top NFT collections data from NFTPriceFloor API and simulate top sales.
-#     Since the top-sales endpoint is not available, we'll use the projects-v2 endpoint
-#     and show the top collections by volume.
-#     """
-#     return None
+async def format_top_sales_message(data: Dict[str, Any], user_id: int) -> str:
+    """
+    Format top sales data into a readable message.
+    """
+    if not data or 'projects' not in data:
+        return get_text(user_id, 'top_sales.no_data')
+    
+    projects = data['projects'][:10]  # Show top 10
+    message_lines = [get_text(user_id, 'top_sales.title')]
+    
+    for i, project in enumerate(projects, 1):
+        name = project.get('name', 'Unknown')
+        volume_24h = project.get('volume_24h', 0)
+        floor_price = project.get('floor_price', 0)
+        
+        # Format volume and floor price
+        volume_str = f"{volume_24h:.2f} ETH" if volume_24h else "N/A"
+        floor_str = f"{floor_price:.3f} ETH" if floor_price else "N/A"
+        
+        message_lines.append(
+            get_text(user_id, 'top_sales.item_format').format(
+                rank=i, name=name, volume=volume_str, floor=floor_str
+            )
+        )
+    
+    message_lines.append("")
+    message_lines.append(get_text(user_id, 'top_sales.footer'))
+    
+    return "\n".join(message_lines)
 
 
-# /top_sales command temporarily deactivated
-# async def top_sales_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-#     """
-#     Handle the /top_sales command.
-#     Show top NFT collections by 24h volume.
-#     """
-#     await update.message.reply_text(
-#         "🚧 The /top_sales command is temporarily unavailable. Please try again later."
-#     )
+def get_top_sales_keyboard(user_id: int) -> InlineKeyboardMarkup:
+    """
+    Create keyboard for top sales command.
+    """
+    keyboard = [
+        [
+            InlineKeyboardButton(
+                get_text(user_id, 'top_sales.refresh'),
+                callback_data='top_sales_refresh'
+            )
+        ],
+        [
+            InlineKeyboardButton(
+                get_text(user_id, 'top_sales.view_more'),
+                url='https://nftpricefloor.com/rankings'
+            )
+        ],
+        [
+            InlineKeyboardButton(
+                get_text(user_id, 'navigation.back_to_menu'),
+                callback_data='main_menu'
+            )
+        ]
+    ]
+    return InlineKeyboardMarkup(keyboard)
+
+
+async def top_sales_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """
+    Handle the /top_sales command.
+    Show top NFT collections by 24h volume.
+    """
+    try:
+        user_id = update.effective_user.id
+        
+        # Send loading message
+        loading_msg = await update.message.reply_text(
+            get_text(user_id, 'top_sales.loading')
+        )
+        
+        # Fetch top sales data
+        data = await fetch_top_sales_cached()
+        
+        if data:
+            message = format_top_sales_message(data, user_id)
+            keyboard = get_top_sales_keyboard(user_id)
+            
+            await loading_msg.edit_text(
+                message,
+                reply_markup=keyboard,
+                parse_mode='HTML'
+            )
+            log_user_action(user_id, "top_sales_command", "success")
+        else:
+            await loading_msg.edit_text(
+                get_text(user_id, 'top_sales.error')
+            )
+            
+    except Exception as e:
+        await handle_command_error(update, context, e, "top_sales_command")
 
 
 async def alerts_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -328,6 +590,7 @@ async def alerts_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     """
     try:
         user_id = update.effective_user.id
+        log_user_action(user_id, "alerts_command", "initiated")
         
         # Check if user provided arguments
         if not context.args:
@@ -378,51 +641,17 @@ async def alerts_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
             unknown_command_text = get_text(user_id, 'alerts.unknown_command')
             await update.message.reply_text(unknown_command_text, parse_mode='Markdown')
         
-        logger.info(f"Alerts command used by user {user_id}: {' '.join(context.args)}")
+        log_user_action(user_id, "alerts_command", "success")
         
     except Exception as e:
-        logger.error(f"Error in alerts_command: {e}")
-        try:
-            error_text = get_text(user_id, 'alerts.error')
-            await update.message.reply_text(error_text)
-        except:
-            pass
+        await handle_command_error(update, e, user_id)
 
 
 async def fetch_nftpf_projects(offset: int = 0, limit: int = 10) -> Optional[Dict[str, Any]]:
     """
-    Fetch NFT projects data from NFTPriceFloor API.
+    Fetch NFT projects data from NFTPriceFloor API (cached version).
     """
-    try:
-        connector = aiohttp.TCPConnector(ssl=ssl.create_default_context())
-        async with aiohttp.ClientSession(connector=connector) as session:
-            url = f"https://{NFTPF_API_HOST}/projects-v2"
-            headers = {
-                'x-rapidapi-key': NFTPF_API_KEY,
-                'x-rapidapi-host': NFTPF_API_HOST
-            }
-            params = {
-                'offset': offset,
-                'limit': limit
-            }
-            
-            logger.info(f"Making request to {url} with params {params}")
-            async with session.get(url, headers=headers, params=params) as response:
-                logger.info(f"Response status: {response.status}")
-                if response.status == 200:
-                    data = await response.json()
-                    logger.info(f"Response data keys: {list(data.keys()) if data else 'None'}")
-                    logger.info(f"Data type: {type(data)}")
-                    if isinstance(data, dict) and 'data' in data:
-                        logger.info(f"Number of projects in data: {len(data['data'])}")
-                    return data
-                else:
-                    response_text = await response.text()
-                    logger.warning(f"NFTPriceFloor API request failed with status {response.status}, response: {response_text}")
-                    return None
-    except Exception as e:
-        logger.error(f"Error fetching NFTPriceFloor data: {e}")
-        return None
+    return await fetch_nftpf_projects_cached(offset=offset, limit=limit)
 
 
 async def rankings_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -432,13 +661,14 @@ async def rankings_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     """
     try:
         user = update.effective_user
+        log_user_action(user.id, "rankings_command", "initiated")
         
         # Send "loading" message
         loading_text = get_text(user.id, 'rankings.loading')
         loading_msg = await update.message.reply_text(loading_text)
         
         # Fetch NFT collections data from NFTPriceFloor API
-        collections_data = await fetch_nftpf_projects(offset=0, limit=10)
+        collections_data = await fetch_nftpf_projects_cached(offset=0, limit=10)
         
         if not collections_data:
             error_text = get_text(user.id, 'rankings.error')
@@ -521,15 +751,10 @@ async def rankings_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -
             parse_mode='Markdown',
             reply_markup=reply_markup
         )
-        logger.info(f"Rankings command used by user {update.effective_user.id}")
+        log_user_action(user.id, "rankings_command", "success")
         
     except Exception as e:
-        logger.error(f"Error in rankings_command: {e}")
-        try:
-            error_text = get_text(user.id, 'rankings.error')
-            await update.message.reply_text(error_text)
-        except:
-            pass
+        await handle_command_error(update, e, user.id)
 
 
 async def rankings_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -547,7 +772,7 @@ async def rankings_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) 
             await query.edit_message_text(loading_text)
             
             # Fetch next 10 collections
-            collections_data = await fetch_nftpf_projects(offset=10, limit=10)
+            collections_data = await fetch_nftpf_projects_cached(offset=10, limit=10)
             
             if not collections_data:
                 error_text = get_text(user.id, 'rankings.error')
@@ -629,18 +854,19 @@ async def rankings_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) 
                 parse_mode='Markdown',
                 reply_markup=reply_markup
             )
+            log_user_action(user.id, "rankings_next", "success")
             
         elif query.data == "rankings_back_10":
             # Go back to top 10
             await rankings_command(update, context)
+            log_user_action(user.id, "rankings_back", "success")
             
     except Exception as e:
-        logger.error(f"Error in rankings_callback: {e}")
-        try:
-            error_text = get_text(user.id, 'rankings.error')
-            await query.edit_message_text(error_text)
-        except:
-            pass
+        # For callback queries, we need to handle errors differently
+        from error_handler import get_error_message
+        error_message = get_error_message(user.id, e)
+        await query.edit_message_text(error_message)
+        logger.error(f"Error in rankings_callback for user {user.id}: {type(e).__name__}: {e}", exc_info=True)
 
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -763,18 +989,30 @@ async def quick_actions_callback(update: Update, context: ContextTypes.DEFAULT_T
         user = update.effective_user
         callback_data = query.data
         
-        # Handle new main menu options
+        # Handle unified main menu options
         if callback_data == 'main_rankings':
             await rankings_command_from_callback(query, user.id)
         elif callback_data == 'main_search':
             await show_collection_search(query, user.id)
-        elif callback_data == 'more_options':
-            await show_more_options_menu(query, user.id)
+        elif callback_data == 'main_top_sales':
+            # Show top sales with back to main menu option
+            await show_top_sales_from_callback(query, user.id)
+        elif callback_data == 'main_popular':
+            await show_popular_collections(query, user.id)
+        elif callback_data == 'main_alerts':
+            await show_alert_setup(query, user.id)
+        elif callback_data == 'main_digest':
+            await show_digest_menu(query, user.id)
+        elif callback_data == 'main_language':
+            await language_command_from_callback(query, user.id)
+        elif callback_data == 'main_help':
+            await show_help_menu(query, user.id)
+        elif callback_data == 'main_tutorial':
+            await show_tutorial(query, user.id)
         # Handle legacy quick actions for backward compatibility
         elif callback_data == 'quick_popular':
             await show_popular_collections(query, user.id)
         elif callback_data == 'quick_rankings':
-            # Redirect to rankings command
             await rankings_command_from_callback(query, user.id)
         elif callback_data == 'quick_alert':
             await show_alert_setup(query, user.id)
@@ -782,6 +1020,8 @@ async def quick_actions_callback(update: Update, context: ContextTypes.DEFAULT_T
             await show_tutorial(query, user.id)
         elif callback_data == 'quick_help':
             await show_help_menu(query, user.id)
+        elif callback_data == 'more_options':
+            await show_tutorial_menu(query, user.id)
         elif callback_data == 'search_collections':
             await show_collection_search(query, user.id)
         elif callback_data == 'quick_access':
@@ -803,8 +1043,8 @@ async def quick_actions_callback(update: Update, context: ContextTypes.DEFAULT_T
         elif callback_data == 'main_menu':
             await show_main_menu(query, user.id)
         elif callback_data == 'back_to_main':
-            # Navigate back to the new main menu structure
-            await show_start_menu(query, user.id)
+            # Navigate back to the unified main menu
+            await show_main_menu(query, user.id)
         elif callback_data == 'help_price':
             await show_price_help(query, user.id)
         elif callback_data == 'help_rankings':
@@ -826,6 +1066,12 @@ async def quick_actions_callback(update: Update, context: ContextTypes.DEFAULT_T
                 await show_digest_menu(query, user.id)
             elif menu_type == 'settings':
                 await language_command_from_callback(query, user.id)
+        # Tutorial callbacks
+        elif callback_data.startswith('tutorial_'):
+            await handle_tutorial_callback(query, user.id, callback_data)
+        # Search callbacks
+        elif callback_data.startswith('search_'):
+            await handle_search_callback(query, user.id, callback_data)
         elif callback_data.startswith('collections_page_'):
             page = int(callback_data.replace('collections_page_', ''))
             await show_popular_collections(query, user.id, page)
@@ -837,6 +1083,450 @@ async def quick_actions_callback(update: Update, context: ContextTypes.DEFAULT_T
             await query.edit_message_text(error_message)
         except:
             pass
+
+
+# Search Callback Handlers
+async def handle_search_callback(query, user_id: int, callback_data: str) -> None:
+    """Handle advanced search callbacks"""
+    try:
+        if callback_data == 'search_quick':
+            await show_quick_search_input(query, user_id)
+        elif callback_data == 'search_filters':
+            await show_search_filters_menu(query, user_id)
+        elif callback_data == 'search_suggestions':
+            await show_search_suggestions(query, user_id)
+        elif callback_data == 'search_history':
+            await show_search_history(query, user_id)
+        elif callback_data == 'search_clear_filters':
+            await clear_search_filters(query, user_id)
+        elif callback_data.startswith('search_filter_'):
+            filter_type = callback_data.replace('search_filter_', '')
+            await handle_filter_selection(query, user_id, filter_type)
+        elif callback_data.startswith('search_suggestion_'):
+            suggestion = callback_data.replace('search_suggestion_', '')
+            await perform_advanced_search(query, user_id, suggestion)
+        elif callback_data.startswith('search_history_'):
+            history_query = callback_data.replace('search_history_', '')
+            await perform_advanced_search(query, user_id, history_query)
+    except Exception as e:
+        logger.error(f"Error in search callback: {e}")
+        error_text = get_text(user_id, 'advanced_search.error')
+        await query.edit_text(error_text, parse_mode='Markdown')
+
+
+async def show_search_no_results(message_or_query, user_id: int, query: str) -> None:
+    """Show no results message with suggestions."""
+    text = get_text(user_id, 'advanced_search.no_results', query=query)
+    
+    # Get suggestions
+    suggestions = get_search_suggestions(user_id)
+    if suggestions:
+        text += f"\n\n💡 **{get_text(user_id, 'advanced_search.try_suggestions')}:**\n"
+        for suggestion in suggestions[:3]:
+            text += f"• {suggestion}\n"
+    
+    keyboard = [
+        [
+            InlineKeyboardButton(get_text(user_id, 'advanced_search.search_again'), callback_data="search_quick"),
+            InlineKeyboardButton(get_text(user_id, 'advanced_search.suggestions'), callback_data="search_suggestions")
+        ],
+        [
+            InlineKeyboardButton(get_text(user_id, 'navigation.back'), callback_data="search_menu")
+        ]
+    ]
+    
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    
+    if hasattr(message_or_query, 'edit_text'):
+        await message_or_query.edit_text(text, reply_markup=reply_markup, parse_mode='Markdown')
+    else:
+        await message_or_query.reply_text(text, reply_markup=reply_markup, parse_mode='Markdown')
+
+
+async def show_search_results(message_or_query, user_id: int, collection_data: Dict[str, Any], query: str) -> None:
+    """Show search results with collection information."""
+    # Extract relevant information from the API response
+    stats = collection_data.get('stats', {})
+    details = collection_data.get('details', {})
+    
+    name = details.get('name', 'Unknown')
+    slug = details.get('slug', '')
+    
+    # Floor price information
+    floor_info = stats.get('floorInfo', {})
+    floor_price_eth = floor_info.get('currentFloorNative', 0)
+    floor_price_usd = floor_info.get('currentFloorUsd', 0)
+    
+    # Create result message
+    text = f"🔍 **{get_text(user_id, 'advanced_search.results_for', query=query)}**\n\n"
+    text += f"📊 **{name}**\n"
+    text += f"💰 Floor: {floor_price_eth:.4f} ETH (${floor_price_usd:.2f})\n"
+    
+    # Add volume and other stats if available
+    sales_temp_native = stats.get('salesTemporalityNative', {})
+    volume_24h = sales_temp_native.get('volume', {}).get('val24h', 0)
+    if volume_24h > 0:
+        text += f"📈 24h Volume: {volume_24h:.2f} ETH\n"
+    
+    keyboard = [
+        [
+            InlineKeyboardButton(get_text(user_id, 'price.view_details'), url=f"https://nftpricefloor.com/collection/{slug}"),
+            InlineKeyboardButton(get_text(user_id, 'alerts.setup'), callback_data=f"alert_{slug}")
+        ],
+        [
+            InlineKeyboardButton(get_text(user_id, 'advanced_search.search_again'), callback_data="search_quick"),
+            InlineKeyboardButton(get_text(user_id, 'navigation.back'), callback_data="search_menu")
+        ]
+    ]
+    
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    
+    if hasattr(message_or_query, 'edit_text'):
+        await message_or_query.edit_text(text, reply_markup=reply_markup, parse_mode='Markdown')
+    else:
+        await message_or_query.reply_text(text, reply_markup=reply_markup, parse_mode='Markdown')
+
+
+# Tutorial Callback Handlers
+async def handle_tutorial_callback(query, user_id: int, callback_data: str) -> None:
+    """Handle interactive tutorial callbacks"""
+    try:
+        if callback_data == 'tutorial_step_1':
+            await show_tutorial_step_1(query, user_id)
+        elif callback_data == 'tutorial_step_2':
+            await show_tutorial_step_2(query, user_id)
+        elif callback_data == 'tutorial_step_3':
+            await show_tutorial_step_3(query, user_id)
+        elif callback_data == 'tutorial_step_4':
+            await show_tutorial_step_4(query, user_id)
+        elif callback_data == 'tutorial_skip':
+            await skip_tutorial(query, user_id)
+        elif callback_data == 'tutorial_try_price':
+            await tutorial_try_price(query, user_id)
+        elif callback_data == 'tutorial_try_rankings':
+            await tutorial_try_rankings(query, user_id)
+        elif callback_data == 'tutorial_try_alerts':
+            await tutorial_try_alerts(query, user_id)
+        elif callback_data == 'tutorial_try_language':
+            await tutorial_try_language(query, user_id)
+        elif callback_data == 'tutorial_finish':
+            await finish_tutorial(query, user_id)
+        elif callback_data.startswith('tutorial_continue_'):
+            step = callback_data.replace('tutorial_continue_', '')
+            if step == '2':
+                await show_tutorial_step_2(query, user_id)
+            elif step == '3':
+                await show_tutorial_step_3(query, user_id)
+            elif step == '4':
+                await show_tutorial_step_4(query, user_id)
+            elif step == 'final':
+                await show_tutorial_final(query, user_id)
+    except Exception as e:
+        logger.error(f"Error in handle_tutorial_callback: {e}")
+        await query.edit_message_text(get_text(user_id, 'errors.general'))
+
+async def show_tutorial_step_1(query, user_id: int) -> None:
+    """Show tutorial step 1 - Floor Price"""
+    mark_tutorial_step_completed(user_id, 1)
+    
+    message = f"{get_text(user_id, 'tutorial.interactive.step1_title')}\n\n{get_text(user_id, 'tutorial.interactive.step1_desc')}"
+    
+    keyboard = [
+        [InlineKeyboardButton(get_text(user_id, 'tutorial.interactive.try_feature'), callback_data='tutorial_try_price')],
+        [InlineKeyboardButton(get_text(user_id, 'tutorial.interactive.next_step'), callback_data='tutorial_continue_2')],
+        [InlineKeyboardButton(get_text(user_id, 'tutorial.interactive.skip_tutorial'), callback_data='tutorial_skip')]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    
+    await query.edit_message_text(message, reply_markup=reply_markup, parse_mode='Markdown')
+
+async def show_tutorial_step_2(query, user_id: int) -> None:
+    """Show tutorial step 2 - Rankings"""
+    mark_tutorial_step_completed(user_id, 2)
+    
+    message = f"{get_text(user_id, 'tutorial.interactive.step2_title')}\n\n{get_text(user_id, 'tutorial.interactive.step2_desc')}"
+    
+    keyboard = [
+        [InlineKeyboardButton(get_text(user_id, 'tutorial.interactive.try_feature'), callback_data='tutorial_try_rankings')],
+        [InlineKeyboardButton(get_text(user_id, 'tutorial.interactive.next_step'), callback_data='tutorial_continue_3')],
+        [InlineKeyboardButton(get_text(user_id, 'tutorial.interactive.skip_tutorial'), callback_data='tutorial_skip')]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    
+    await query.edit_message_text(message, reply_markup=reply_markup, parse_mode='Markdown')
+
+async def show_tutorial_step_3(query, user_id: int) -> None:
+    """Show tutorial step 3 - Alerts"""
+    mark_tutorial_step_completed(user_id, 3)
+    
+    message = f"{get_text(user_id, 'tutorial.interactive.step3_title')}\n\n{get_text(user_id, 'tutorial.interactive.step3_desc')}"
+    
+    keyboard = [
+        [InlineKeyboardButton(get_text(user_id, 'tutorial.interactive.try_feature'), callback_data='tutorial_try_alerts')],
+        [InlineKeyboardButton(get_text(user_id, 'tutorial.interactive.next_step'), callback_data='tutorial_continue_4')],
+        [InlineKeyboardButton(get_text(user_id, 'tutorial.interactive.skip_tutorial'), callback_data='tutorial_skip')]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    
+    await query.edit_message_text(message, reply_markup=reply_markup, parse_mode='Markdown')
+
+async def show_tutorial_step_4(query, user_id: int) -> None:
+    """Show tutorial step 4 - Language & Settings"""
+    mark_tutorial_step_completed(user_id, 4)
+    
+    message = f"{get_text(user_id, 'tutorial.interactive.step4_title')}\n\n{get_text(user_id, 'tutorial.interactive.step4_desc')}"
+    
+    keyboard = [
+        [InlineKeyboardButton(get_text(user_id, 'tutorial.interactive.try_feature'), callback_data='tutorial_try_language')],
+        [InlineKeyboardButton(get_text(user_id, 'tutorial.interactive.next_step'), callback_data='tutorial_continue_final')],
+        [InlineKeyboardButton(get_text(user_id, 'tutorial.interactive.skip_tutorial'), callback_data='tutorial_skip')]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    
+    await query.edit_message_text(message, reply_markup=reply_markup, parse_mode='Markdown')
+
+async def show_tutorial_final(query, user_id: int) -> None:
+    """Show tutorial completion"""
+    message = f"{get_text(user_id, 'tutorial.interactive.final_title')}\n\n{get_text(user_id, 'tutorial.interactive.final_desc')}"
+    
+    keyboard = [
+        [InlineKeyboardButton(get_text(user_id, 'tutorial.interactive.finish_tutorial'), callback_data='tutorial_finish')]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    
+    await query.edit_message_text(message, reply_markup=reply_markup, parse_mode='Markdown')
+
+async def tutorial_try_price(query, user_id: int) -> None:
+    """Let user try the price feature during tutorial"""
+    await get_collection_price_from_callback(query, user_id, 'cryptopunks')
+    
+    # After showing price, show step completion
+    await asyncio.sleep(2)
+    message = get_text(user_id, 'tutorial.interactive.step1_completed')
+    keyboard = [
+        [InlineKeyboardButton(get_text(user_id, 'tutorial.interactive.continue'), callback_data='tutorial_continue_2')]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    
+    try:
+        await query.message.reply_text(message, reply_markup=reply_markup, parse_mode='Markdown')
+    except:
+        pass
+
+async def tutorial_try_rankings(query, user_id: int) -> None:
+    """Let user try the rankings feature during tutorial"""
+    await rankings_command_from_callback(query, user_id)
+    
+    # After showing rankings, show step completion
+    await asyncio.sleep(2)
+    message = get_text(user_id, 'tutorial.interactive.step2_completed')
+    keyboard = [
+        [InlineKeyboardButton(get_text(user_id, 'tutorial.interactive.continue'), callback_data='tutorial_continue_3')]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    
+    try:
+        await query.message.reply_text(message, reply_markup=reply_markup, parse_mode='Markdown')
+    except:
+        pass
+
+async def tutorial_try_alerts(query, user_id: int) -> None:
+    """Let user try the alerts feature during tutorial"""
+    await show_alert_setup(query, user_id)
+    
+    # After showing alerts, show step completion
+    await asyncio.sleep(2)
+    message = get_text(user_id, 'tutorial.interactive.step3_completed')
+    keyboard = [
+        [InlineKeyboardButton(get_text(user_id, 'tutorial.interactive.continue'), callback_data='tutorial_continue_4')]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    
+    try:
+        await query.message.reply_text(message, reply_markup=reply_markup, parse_mode='Markdown')
+    except:
+        pass
+
+async def tutorial_try_language(query, user_id: int) -> None:
+    """Let user try the language feature during tutorial"""
+    await language_command_from_callback(query, user_id)
+    
+    # After showing language options, show step completion
+    await asyncio.sleep(2)
+    message = get_text(user_id, 'tutorial.interactive.step4_completed')
+    keyboard = [
+        [InlineKeyboardButton(get_text(user_id, 'tutorial.interactive.continue'), callback_data='tutorial_continue_final')]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    
+    try:
+        await query.message.reply_text(message, reply_markup=reply_markup, parse_mode='Markdown')
+    except:
+        pass
+
+async def skip_tutorial(query, user_id: int) -> None:
+    """Skip the tutorial and go to main menu"""
+    mark_tutorial_completed(user_id)
+    log_user_action(user_id, 'tutorial_skipped', {})
+    
+    # Show main menu
+    await show_main_menu(query, user_id)
+
+async def finish_tutorial(query, user_id: int) -> None:
+    """Complete the tutorial and go to main menu"""
+    mark_tutorial_completed(user_id)
+    log_user_action(user_id, 'tutorial_completed', {})
+    
+    # Show main menu
+    await show_main_menu(query, user_id)
+
+async def show_quick_search_input(query, user_id: int) -> None:
+    """Show quick search input prompt."""
+    text = get_text(user_id, 'advanced_search.quick_search_prompt')
+    
+    keyboard = [
+        [
+            InlineKeyboardButton(get_text(user_id, 'navigation.back'), callback_data="search_menu")
+        ]
+    ]
+    
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    await query.edit_text(text, reply_markup=reply_markup, parse_mode='Markdown')
+
+
+async def show_search_filters_menu(query, user_id: int) -> None:
+    """Show search filters menu."""
+    text = get_text(user_id, 'advanced_search.filters_menu')
+    
+    # Get current filters
+    current_filters = get_user_search_filters(user_id)
+    
+    keyboard = [
+        [
+            InlineKeyboardButton(
+                f"📂 {get_text(user_id, 'advanced_search.filter_category')} {'✓' if current_filters.get('category') else ''}",
+                callback_data="search_filter_category"
+            )
+        ],
+        [
+            InlineKeyboardButton(
+                f"💰 {get_text(user_id, 'advanced_search.filter_price')} {'✓' if current_filters.get('min_price') or current_filters.get('max_price') else ''}",
+                callback_data="search_filter_price"
+            )
+        ],
+        [
+            InlineKeyboardButton(
+                f"🔥 {get_text(user_id, 'advanced_search.filter_trending')} {'✓' if current_filters.get('trending') else ''}",
+                callback_data="search_filter_trending"
+            ),
+            InlineKeyboardButton(
+                f"💎 {get_text(user_id, 'advanced_search.filter_blue_chip')} {'✓' if current_filters.get('blue_chip') else ''}",
+                callback_data="search_filter_blue_chip"
+            )
+        ],
+        [
+            InlineKeyboardButton(get_text(user_id, 'advanced_search.clear_filters'), callback_data="search_clear_filters")
+        ],
+        [
+            InlineKeyboardButton(get_text(user_id, 'navigation.back'), callback_data="search_menu")
+        ]
+    ]
+    
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    await query.edit_text(text, reply_markup=reply_markup, parse_mode='Markdown')
+
+
+async def show_search_suggestions(query, user_id: int) -> None:
+    """Show search suggestions."""
+    text = get_text(user_id, 'advanced_search.suggestions_title')
+    
+    suggestions = get_search_suggestions(user_id)
+    
+    keyboard = []
+    for i, suggestion in enumerate(suggestions[:6]):
+        keyboard.append([
+            InlineKeyboardButton(f"🔍 {suggestion}", callback_data=f"search_suggestion_{suggestion}")
+        ])
+    
+    keyboard.append([
+        InlineKeyboardButton(get_text(user_id, 'navigation.back'), callback_data="search_menu")
+    ])
+    
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    await query.edit_text(text, reply_markup=reply_markup, parse_mode='Markdown')
+
+
+async def show_search_history(query, user_id: int) -> None:
+    """Show user's search history."""
+    text = get_text(user_id, 'advanced_search.history_title')
+    
+    history = get_user_search_history(user_id)
+    
+    if not history:
+        text += f"\n\n{get_text(user_id, 'advanced_search.no_history')}"
+        keyboard = [
+            [
+                InlineKeyboardButton(get_text(user_id, 'navigation.back'), callback_data="search_menu")
+            ]
+        ]
+    else:
+        keyboard = []
+        for search_query in history[:6]:
+            keyboard.append([
+                InlineKeyboardButton(f"🔍 {search_query}", callback_data=f"search_history_{search_query}")
+            ])
+        
+        keyboard.append([
+            InlineKeyboardButton(get_text(user_id, 'navigation.back'), callback_data="search_menu")
+        ])
+    
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    await query.edit_text(text, reply_markup=reply_markup, parse_mode='Markdown')
+
+
+async def clear_search_filters(query, user_id: int) -> None:
+    """Clear all user search filters."""
+    clear_user_search_filters(user_id)
+    
+    text = get_text(user_id, 'advanced_search.filters_cleared')
+    
+    keyboard = [
+        [
+            InlineKeyboardButton(get_text(user_id, 'navigation.back'), callback_data="search_filters")
+        ]
+    ]
+    
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    await query.edit_text(text, reply_markup=reply_markup, parse_mode='Markdown')
+
+
+async def handle_filter_selection(query, user_id: int, filter_type: str) -> None:
+    """Handle filter selection and toggle."""
+    current_filters = get_user_search_filters(user_id)
+    
+    if filter_type == 'trending':
+        current_filters['trending'] = not current_filters.get('trending', False)
+    elif filter_type == 'blue_chip':
+        current_filters['blue_chip'] = not current_filters.get('blue_chip', False)
+    elif filter_type == 'category':
+        # For now, just toggle between 'art' and None
+        if current_filters.get('category') == 'art':
+            current_filters.pop('category', None)
+        else:
+            current_filters['category'] = 'art'
+    elif filter_type == 'price':
+        # For now, set a default price range
+        if current_filters.get('min_price'):
+            current_filters.pop('min_price', None)
+            current_filters.pop('max_price', None)
+        else:
+            current_filters['min_price'] = 0.1
+            current_filters['max_price'] = 10.0
+    
+    set_user_search_filters(user_id, current_filters)
+    
+    # Show updated filters menu
+    await show_search_filters_menu(query, user_id)
 
 
 async def show_collection_search(query, user_id: int) -> None:
@@ -1039,28 +1729,21 @@ async def show_tutorial(query, user_id: int) -> None:
 
 async def show_main_menu(query, user_id: int) -> None:
     """
-    Display the main menu with categorized options.
+    Display the unified main menu with all core features matching the specified design.
     """
     try:
-        menu_text = get_text(user_id, 'menus.main.title')
+        # Get user info for personalized greeting
+        user_name = "Dave Joga"
+        if hasattr(query, 'from_user') and query.from_user:
+            user_name = query.from_user.first_name or "Dave Joga"
         
-        keyboard = [
-            [
-                InlineKeyboardButton(get_text(user_id, 'menus.main.market_data'), callback_data='menu_market'),
-                InlineKeyboardButton(get_text(user_id, 'menus.main.collections'), callback_data='menu_collections')
-            ],
-            [
-                InlineKeyboardButton(get_text(user_id, 'menus.main.alerts'), callback_data='menu_alerts'),
-                InlineKeyboardButton(get_text(user_id, 'menus.main.digest'), callback_data='menu_digest')
-            ],
-            [
-                InlineKeyboardButton(get_text(user_id, 'menus.main.settings'), callback_data='menu_settings'),
-                InlineKeyboardButton(get_text(user_id, 'menus.main.help'), callback_data='quick_help')
-            ]
-        ]
+        # Create the welcome message matching the image design
+        welcome_message = f"🤖 Hello {user_name}!\n\nWelcome to NFT Market Insights Bot! I'm here to help you track NFT collections, set price alerts, and stay updated with the latest market trends.\n\n✨ **Let's get you started:**\n\n🎯 **Quick Actions:**\n• 💰 Check floor prices\n• 🏆 Browse top collections\n• 🔔 Set price alerts\n• 🌍 Change language\n\nChoose an option below or use /help for all commands!"
         
+        # Use the standardized main menu keyboard
+        keyboard = get_main_menu_keyboard(user_id)
         reply_markup = InlineKeyboardMarkup(keyboard)
-        await query.edit_message_text(menu_text, reply_markup=reply_markup, parse_mode='Markdown')
+        await query.edit_message_text(welcome_message, reply_markup=reply_markup, parse_mode='Markdown')
         
     except Exception as e:
         logger.error(f"Error in show_main_menu: {e}")
@@ -1068,49 +1751,20 @@ async def show_main_menu(query, user_id: int) -> None:
         await query.edit_message_text(error_message)
 
 
-async def show_start_menu(query, user_id: int) -> None:
-    """
-    Display the main start menu structure.
-    """
-    try:
-        welcome_message = get_text(user_id, 'welcome.greeting', name="")
-        
-        # Create main menu buttons
-        keyboard = [
-            [
-                InlineKeyboardButton('🏆 Top Rankings', callback_data='main_rankings'),
-                InlineKeyboardButton('🔍 Search Collection', callback_data='main_search')
-            ],
-            [
-                InlineKeyboardButton('📊 Daily Digest', callback_data='menu_digest'),
-                InlineKeyboardButton('⚙️ More Options', callback_data='more_options')
-            ]
-        ]
-        
-        reply_markup = InlineKeyboardMarkup(keyboard)
-        await query.edit_message_text(welcome_message, reply_markup=reply_markup, parse_mode='Markdown')
-        
-    except Exception as e:
-        logger.error(f"Error in show_start_menu: {e}")
-        error_message = get_text(user_id, 'errors.general')
-        await query.edit_message_text(error_message)
+# Removed show_start_menu - now using unified show_main_menu
 
 
-async def show_more_options_menu(query, user_id: int) -> None:
+async def show_tutorial_menu(query, user_id: int) -> None:
     """
-    Display the More Options submenu with additional features.
+    Display the tutorial and help options.
     """
     try:
-        menu_text = "⚙️ **More Options**\n\nChoose from additional features:"
+        menu_text = "📚 **Tutorial & Help**\n\nLearn how to use the bot:"
         
         keyboard = [
             [
-                InlineKeyboardButton('🔥 Popular Collections', callback_data='quick_popular'),
-                InlineKeyboardButton('🚨 Set Alerts', callback_data='quick_alert')
-            ],
-            [
-                InlineKeyboardButton('📚 Tutorial', callback_data='quick_tutorial'),
-                InlineKeyboardButton('❓ Help', callback_data='quick_help')
+                InlineKeyboardButton('📚 Start Tutorial', callback_data='main_tutorial'),
+                InlineKeyboardButton('❓ Help Topics', callback_data='main_help')
             ],
             [
                 InlineKeyboardButton('🔙 Back to Main Menu', callback_data='back_to_main')
@@ -1121,7 +1775,7 @@ async def show_more_options_menu(query, user_id: int) -> None:
         await query.edit_message_text(menu_text, reply_markup=reply_markup, parse_mode='Markdown')
         
     except Exception as e:
-        logger.error(f"Error in show_more_options_menu: {e}")
+        logger.error(f"Error in show_tutorial_menu: {e}")
         error_message = get_text(user_id, 'errors.general')
         await query.edit_message_text(error_message)
 
@@ -1339,7 +1993,7 @@ async def rankings_command_from_callback(query, user_id: int) -> None:
         await query.edit_message_text(loading_message)
         
         # Fetch rankings data
-        rankings_data = await fetch_nftpf_projects(offset=0, limit=10)
+        rankings_data = await fetch_nftpf_projects_cached(offset=0, limit=10)
         
         if not rankings_data:
             error_message = get_text(user_id, 'rankings.error')
@@ -1390,6 +2044,36 @@ async def rankings_command_from_callback(query, user_id: int) -> None:
     except Exception as e:
         logger.error(f"Error in rankings_command_from_callback: {e}")
         error_message = get_text(user_id, 'rankings.error')
+        await query.edit_message_text(error_message)
+
+
+async def show_top_sales_from_callback(query, user_id: int) -> None:
+    """
+    Handle top sales command from callback.
+    """
+    try:
+        loading_message = get_text(user_id, 'top_sales.loading')
+        await query.edit_message_text(loading_message)
+        
+        # Fetch top sales data
+        top_sales_data = await fetch_top_sales_cached()
+        
+        if not top_sales_data:
+            error_message = get_text(user_id, 'top_sales.error')
+            await query.edit_message_text(error_message)
+            return
+        
+        # Format top sales message
+        message = await format_top_sales_message(top_sales_data, user_id)
+        
+        # Add navigation buttons
+        keyboard = get_top_sales_keyboard(user_id)
+        
+        await query.edit_message_text(message, reply_markup=keyboard, parse_mode='Markdown')
+        
+    except Exception as e:
+        logger.error(f"Error in show_top_sales_from_callback: {e}")
+        error_message = get_text(user_id, 'top_sales.error')
         await query.edit_message_text(error_message)
 
 
@@ -1596,9 +2280,18 @@ async def setup_alert_from_callback(query, user_id: int, collection_slug: str) -
 # Import user storage module
 from user_storage import (
     get_digest_settings, set_digest_settings, toggle_digest_enabled, 
-    set_digest_time as storage_set_digest_time, init_storage, cleanup_storage
+    set_digest_time as storage_set_digest_time, init_storage, cleanup_storage,
+    is_tutorial_completed, start_tutorial, mark_tutorial_step_completed, 
+    mark_tutorial_completed, get_user_tutorial_status
+)
+# Import search storage module
+from search_storage import (
+    init_search_storage, add_search_to_history, get_user_search_history,
+    get_search_suggestions, set_user_search_filters, get_user_search_filters,
+    clear_user_search_filters, categorize_collection, cleanup_search_storage
 )
 from digest_scheduler import start_digest_scheduler, stop_digest_scheduler
+# Removed direct import - using cached version from cached_api
 
 async def digest_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """
@@ -1607,12 +2300,11 @@ async def digest_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     """
     try:
         user = update.effective_user
+        log_user_action(user.id, "digest_command", "initiated")
         await show_digest_menu(update.message, user.id)
-        logger.info(f"User {user.id} ({user.username}) used digest command")
+        log_user_action(user.id, "digest_command", "success")
     except Exception as e:
-        logger.error(f"Error in digest_command: {e}")
-        error_message = get_text(user.id, 'errors.general') if 'user' in locals() else "Sorry, something went wrong. Please try again later."
-        await update.message.reply_text(error_message)
+        await handle_command_error(update, e, user.id)
 
 async def digest_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """
@@ -1640,12 +2332,11 @@ async def digest_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
             await show_digest_menu(query, user.id)
             
     except Exception as e:
-        logger.error(f"Error in digest_callback: {e}")
-        try:
-            error_message = get_text(update.effective_user.id, 'errors.general')
-            await query.edit_message_text(error_message)
-        except:
-            pass
+        # For callback queries, we need to handle errors differently
+        from error_handler import get_error_message
+        error_message = get_error_message(update.effective_user.id, e)
+        await query.edit_message_text(error_message)
+        logger.error(f"Error in digest_callback for user {update.effective_user.id}: {type(e).__name__}: {e}", exc_info=True)
 
 async def show_digest_menu(message_or_query, user_id: int) -> None:
     """
@@ -1806,6 +2497,46 @@ async def show_digest_settings(query, user_id: int) -> None:
         error_message = get_text(user_id, 'errors.general')
         await query.edit_message_text(error_message)
 
+async def top_sales_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Handle top sales callback queries."""
+    query = update.callback_query
+    await query.answer()
+    
+    user_id = query.from_user.id
+    
+    if query.data == 'top_sales_refresh':
+        try:
+            # Send loading message
+            await query.edit_message_text(
+                get_text(user_id, 'top_sales.loading')
+            )
+            
+            # Fetch fresh data
+            data = await fetch_top_sales_cached()
+            
+            if data:
+                message = format_top_sales_message(data, user_id)
+                keyboard = get_top_sales_keyboard(user_id)
+                
+                await query.edit_message_text(
+                    message,
+                    reply_markup=keyboard,
+                    parse_mode='HTML'
+                )
+                log_user_action(user_id, "top_sales_refresh", "success")
+            else:
+                await query.edit_message_text(
+                    get_text(user_id, 'top_sales.error')
+                )
+                
+        except Exception as e:
+            # For callback queries, we need to handle errors differently
+            from error_handler import get_error_message
+            error_message = get_error_message(user_id, e)
+            await query.edit_message_text(error_message)
+            logger.error(f"Error in top_sales_callback for user {user_id}: {type(e).__name__}: {e}", exc_info=True)
+
+
 async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE) -> None:
     """
     Handle errors that occur during bot operation.
@@ -1830,9 +2561,20 @@ def main() -> None:
     try:
         # Initialize storage
         init_storage()
+        init_search_storage()
         
         # Create the Application
         application = Application.builder().token(BOT_TOKEN).build()
+        
+        # Initialize cache manager on startup
+        async def post_init(app):
+            await init_cache()
+            logger.info("Cache manager initialized")
+            # Start digest scheduler
+            await start_digest_scheduler(app.bot)
+            logger.info("Digest scheduler started")
+        
+        application.post_init = post_init
         
         # Add command handlers
         application.add_handler(CommandHandler("start", start_command))
@@ -1842,32 +2584,21 @@ def main() -> None:
         application.add_handler(CommandHandler("alerts", alerts_command))
         application.add_handler(CommandHandler("digest", digest_command))
         application.add_handler(CommandHandler("language", language_command))
-        # application.add_handler(CommandHandler("top_sales", top_sales_command))  # Temporarily deactivated
+        application.add_handler(CommandHandler("top_sales", top_sales_command))
+        application.add_handler(CommandHandler("search", advanced_search_command))
         
         # Add callback query handlers
         application.add_handler(CallbackQueryHandler(rankings_callback, pattern='^rankings_'))
         application.add_handler(CallbackQueryHandler(language_callback, pattern='^lang_'))
         application.add_handler(CallbackQueryHandler(digest_callback, pattern='^digest_'))
-        application.add_handler(CallbackQueryHandler(quick_actions_callback, pattern='^quick_|^price_|^alert_|^back_to_|^main_menu$|^menu_|^alerts_list$|^search_collections$|^collections_page_|^help_|^collection_'))
+        application.add_handler(CallbackQueryHandler(top_sales_callback, pattern='^top_sales_'))
+        application.add_handler(CallbackQueryHandler(quick_actions_callback, pattern='^quick_|^price_|^alert_|^back_to_|^main_|^menu_|^alerts_list$|^search_|^collections_page_|^help_|^collection_|^tutorial_|^popular_page_'))
         
         # Add error handler
         application.add_error_handler(error_handler)
         
         # Log bot startup
         logger.info("Bot is starting...")
-        
-        # Start digest scheduler in the background
-        async def start_scheduler():
-            await start_digest_scheduler(application.bot)
-            logger.info("Digest scheduler started")
-        
-        # Start the digest scheduler
-        import threading
-        def run_scheduler():
-            asyncio.run(start_scheduler())
-        
-        scheduler_thread = threading.Thread(target=run_scheduler, daemon=True)
-        scheduler_thread.start()
         
         if HEROKU_APP_NAME:
             logger.info(f"Starting bot in hybrid mode (polling + web server) on port {PORT}")
@@ -1907,6 +2638,8 @@ def main() -> None:
         # Cleanup storage on shutdown
         try:
             cleanup_storage()
+            # Skip async cleanup for now
+            cleanup_search_storage()
         except Exception as e:
             logger.error(f"Error during storage cleanup: {e}")
 

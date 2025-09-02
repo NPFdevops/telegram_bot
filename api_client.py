@@ -2,8 +2,10 @@ import aiohttp
 import ssl
 import logging
 import os
+import asyncio
 from typing import Optional, Dict, Any
 from dotenv import load_dotenv
+from error_handler import handle_api_error, log_api_request
 
 load_dotenv()
 
@@ -19,33 +21,127 @@ async def fetch_nftpf_projects(offset: int = 0, limit: int = 10) -> Optional[Dic
     """
     Fetch NFT projects data from NFTPriceFloor API.
     """
+    url = f"https://{NFTPF_API_HOST}/projects-v2"
+    params = {'offset': offset, 'limit': limit}
+    
     try:
         connector = aiohttp.TCPConnector(ssl=ssl.create_default_context())
-        async with aiohttp.ClientSession(connector=connector) as session:
-            url = f"https://{NFTPF_API_HOST}/projects-v2"
+        timeout = aiohttp.ClientTimeout(total=30)  # 30 second timeout
+        
+        async with aiohttp.ClientSession(connector=connector, timeout=timeout) as session:
             headers = {
                 'x-rapidapi-key': NFTPF_API_KEY,
                 'x-rapidapi-host': NFTPF_API_HOST
             }
-            params = {
-                'offset': offset,
-                'limit': limit
-            }
             
-            logger.info(f"Making request to {url} with params {params}")
+            log_api_request(url, params)
+            
             async with session.get(url, headers=headers, params=params) as response:
-                logger.info(f"Response status: {response.status}")
+                log_api_request(url, params, response.status)
+                
                 if response.status == 200:
                     data = await response.json()
-                    logger.info(f"Response data keys: {list(data.keys()) if data else 'None'}")
-                    logger.info(f"Data type: {type(data)}")
-                    if isinstance(data, dict) and 'data' in data:
-                        logger.info(f"Number of projects in data: {len(data['data'])}")
+                    logger.info(f"Successfully fetched {len(data.get('data', []))} projects")
                     return data
+                elif response.status == 429:
+                    raise aiohttp.ClientResponseError(
+                        request_info=response.request_info,
+                        history=response.history,
+                        status=429,
+                        message="Rate limit exceeded"
+                    )
+                elif response.status == 404:
+                    raise aiohttp.ClientResponseError(
+                        request_info=response.request_info,
+                        history=response.history,
+                        status=404,
+                        message="Endpoint not found"
+                    )
+                elif 500 <= response.status < 600:
+                    response_text = await response.text()
+                    raise aiohttp.ClientResponseError(
+                        request_info=response.request_info,
+                        history=response.history,
+                        status=response.status,
+                        message=f"Server error: {response_text[:200]}"
+                    )
                 else:
                     response_text = await response.text()
-                    logger.warning(f"NFTPriceFloor API request failed with status {response.status}, response: {response_text}")
-                    return None
+                    raise aiohttp.ClientResponseError(
+                        request_info=response.request_info,
+                        history=response.history,
+                        status=response.status,
+                        message=f"API error: {response_text[:200]}"
+                    )
+                    
+    except (aiohttp.ClientError, asyncio.TimeoutError) as e:
+        success, error_type = await handle_api_error(e, "fetch_nftpf_projects")
+        return None
     except Exception as e:
-        logger.error(f"Error fetching NFTPriceFloor data: {e}")
+        success, error_type = await handle_api_error(e, "fetch_nftpf_projects")
+        return None
+
+
+async def fetch_top_sales() -> Optional[Dict[str, Any]]:
+    """
+    Fetch top NFT sales data from NFTPriceFloor API.
+    """
+    url = f"https://{NFTPF_API_HOST}/projects/top-sales"
+    
+    try:
+        connector = aiohttp.TCPConnector(ssl=ssl.create_default_context())
+        timeout = aiohttp.ClientTimeout(total=30)  # 30 second timeout
+        
+        async with aiohttp.ClientSession(connector=connector, timeout=timeout) as session:
+            headers = {
+                'x-rapidapi-key': NFTPF_API_KEY,
+                'x-rapidapi-host': NFTPF_API_HOST
+            }
+            
+            log_api_request(url)
+            
+            async with session.get(url, headers=headers) as response:
+                log_api_request(url, None, response.status)
+                
+                if response.status == 200:
+                    data = await response.json()
+                    projects_count = len(data.get('projects', [])) if data else 0
+                    logger.info(f"Successfully fetched {projects_count} top sales")
+                    return data
+                elif response.status == 429:
+                    raise aiohttp.ClientResponseError(
+                        request_info=response.request_info,
+                        history=response.history,
+                        status=429,
+                        message="Rate limit exceeded"
+                    )
+                elif response.status == 404:
+                    raise aiohttp.ClientResponseError(
+                        request_info=response.request_info,
+                        history=response.history,
+                        status=404,
+                        message="Endpoint not found"
+                    )
+                elif 500 <= response.status < 600:
+                    response_text = await response.text()
+                    raise aiohttp.ClientResponseError(
+                        request_info=response.request_info,
+                        history=response.history,
+                        status=response.status,
+                        message=f"Server error: {response_text[:200]}"
+                    )
+                else:
+                    response_text = await response.text()
+                    raise aiohttp.ClientResponseError(
+                        request_info=response.request_info,
+                        history=response.history,
+                        status=response.status,
+                        message=f"API error: {response_text[:200]}"
+                    )
+                    
+    except (aiohttp.ClientError, asyncio.TimeoutError) as e:
+        success, error_type = await handle_api_error(e, "fetch_top_sales")
+        return None
+    except Exception as e:
+        success, error_type = await handle_api_error(e, "fetch_top_sales")
         return None

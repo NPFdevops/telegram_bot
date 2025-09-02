@@ -8,7 +8,30 @@
       "step2": "**Step 2:** 🏆 Browse Rankings\nUse `/rankings` to see top collections by volume",
       "step3": "**Step 3:** 🔔 Set Price Alerts\nUse `/alerts add cryptopunks 50` to get notified",
       "step4": "**Step 4:** 🌍 Choose Your Language\nUse `/language` to switch languages",
-      "complete": "🎉 You're all set! Try any command to get started."
+      "complete": "🎉 You're all set! Try any command to get started.",
+      "interactive": {
+        "welcome": "🎓 **Welcome to NFT Market Insights!**\n\nLet's take a quick interactive tour to get you started. This will only take 2 minutes!\n\n✨ **What you'll learn:**\n• How to check floor prices\n• Browse top collections\n• Set up price alerts\n• Navigate the bot\n\nReady to begin?",
+        "step1_title": "📊 **Step 1: Check Floor Prices**",
+        "step1_desc": "Floor prices show the lowest price for any NFT in a collection. This is crucial for tracking value!\n\n💡 **Try it now:** Click the button below to check CryptoPunks floor price.",
+        "step1_completed": "✅ **Great!** You just checked a floor price!\n\nNotice how you get:\n• Current floor price\n• 24h change percentage\n• Direct link for more details\n\nReady for the next step?",
+        "step2_title": "🏆 **Step 2: Browse Rankings**",
+        "step2_desc": "Rankings show the hottest NFT collections by volume, helping you spot trends.\n\n💡 **Try it now:** Click below to see top collections.",
+        "step2_completed": "✅ **Excellent!** You explored the rankings!\n\nYou can:\n• See top collections by volume\n• Navigate through pages\n• Get detailed info on any collection\n\nLet's continue!",
+        "step3_title": "🔔 **Step 3: Set Price Alerts**",
+        "step3_desc": "Price alerts notify you when a collection hits your target price. You can set up to 10 alerts!\n\n💡 **Try it now:** Let's set up an alert.",
+        "step3_completed": "✅ **Perfect!** You've learned about alerts!\n\nRemember:\n• Up to 10 alerts per user\n• Get instant notifications\n• Manage alerts anytime with /alerts\n\nOne more step!",
+        "step4_title": "🌍 **Step 4: Language & Settings**",
+        "step4_desc": "Customize your experience! The bot supports multiple languages and various settings.\n\n💡 **Try it now:** Check out the language options.",
+        "step4_completed": "✅ **Awesome!** You've explored the settings!\n\nYou can:\n• Switch languages anytime\n• Customize your experience\n• Access help when needed\n\nYou're ready for the final step!",
+        "final_title": "🎉 **Tutorial Complete!**",
+        "final_desc": "Congratulations! You're now ready to use NFT Market Insights Bot like a pro!\n\n🚀 **Quick recap:**\n• `/price [collection]` - Check floor prices\n• `/rankings` - Browse top collections\n• `/alerts` - Manage price alerts\n• `/language` - Change language\n• `/help` - Get help anytime\n\n**Pro tip:** Use the menu buttons for quick access to all features!\n\nHappy trading! 📈",
+        "skip_tutorial": "⏭️ Skip Tutorial",
+        "next_step": "➡️ Next Step",
+        "try_feature": "🔥 Try This Feature",
+        "continue": "✅ Continue",
+        "finish_tutorial": "🎯 Finish Tutorial",
+        "back_to_menu": "🏠 Back to Menu"
+      }
     },
     "quick_actions": {
       "title": "🚀 **Quick Actions**",
@@ -117,6 +140,17 @@
       "page_info": "Page {current} of {total}"
     }
   },
+  "top_sales": {
+    "title": "💎 **Top NFT Sales**\n\n",
+    "loading": "⏳ Loading top sales...",
+    "error": "❌ Error fetching top sales data. Please try again later.",
+    "no_data": "❌ No sales data available at the moment.",
+    "success": "✅ Top sales loaded successfully!",
+    "footer": "🔄 *Data from NFTPriceFloor API*",
+    "item": "{rank}. **{collection}** #{token_id}\n   💰 Sale Price: {price} ETH (${usd})\n   🕒 {time_ago}\n",
+    "refresh_button": "🔄 Refresh",
+    "view_more": "👀 View More Sales"
+  },
   "alerts": {
     "help": "🔔 **NFT Price Alerts**\n\n**Commands:**\n`/alerts list` - View your active alerts\n`/alerts add <collection> <price>` - Add price alert\n`/alerts remove <id>` - Remove alert by ID\n\n**Examples:**\n`/alerts add cryptopunks 50` - Alert when CryptoPunks floor hits 50 ETH\n`/alerts add bored-ape-yacht-club 30` - Alert for BAYC at 30 ETH\n\n💡 *Alerts check prices every hour*",
     "list_empty": "📋 **Your Active Alerts**\n\n🔄 No active alerts found.\n\nUse `/alerts add <collection> <price>` to create your first alert!",
@@ -165,7 +199,15 @@
     "cancel": "Cancel",
     "back": "Back",
     "next": "Next",
-    "previous": "Previous"
+    "previous": "Previous",
+    "page_info": "Page {current} of {total}",
+    "confirm": "✅ Confirm",
+    "network_error": "🌐 Network connection error. Please check your internet and try again.",
+    "api_error": "🔧 Service temporarily unavailable. Please try again in a few minutes.",
+    "timeout_error": "⏱️ Request timed out. Please try again.",
+    "rate_limit_error": "⏳ Too many requests. Please wait a moment and try again.",
+    "invalid_input": "❌ Invalid input. Please check your command and try again.",
+    "not_found_error": "🔍 Requested data not found. Please verify the collection name."
   },
   "navigation": {
     "back": "🔙 Back",
@@ -550,7 +592,43 @@
     "error": "❌ Error loading rankings. Please try again."
   },
   "search": {
-    "instructions": "🔍 **Search Collections**\n\nType the name of any NFT collection to get instant price data and market insights."
+    "instructions": "🔍 **Search Collections**\n\nType the name of any NFT collection to get instant price data and market insights.",
+    "advanced": {
+      "title": "🔍 **Advanced Search**\n\nFind NFT collections with powerful filters and suggestions.",
+      "filters": {
+        "title": "🎛️ **Search Filters**",
+        "category": "📂 Category",
+        "price_range": "💰 Price Range",
+        "volume_range": "📊 Volume Range",
+        "trending": "🔥 Trending Only",
+        "blue_chip": "💎 Blue Chip Only",
+        "new_projects": "🆕 New Projects"
+      },
+      "suggestions": {
+        "title": "💡 **Search Suggestions**",
+        "popular_searches": "Popular searches:",
+        "recent_searches": "Your recent searches:",
+        "trending_collections": "Trending collections:",
+        "no_recent": "No recent searches"
+      },
+      "results": {
+        "found": "✅ Found {count} collection(s) matching '{query}'",
+        "no_results": "❌ No collections found for '{query}'",
+        "suggestions_text": "💡 Did you mean:",
+        "try_different": "Try a different search term or use filters"
+      },
+      "buttons": {
+        "apply_filters": "🎛️ Apply Filters",
+        "clear_filters": "🗑️ Clear Filters",
+        "search_again": "🔍 Search Again",
+        "view_suggestions": "💡 View Suggestions"
+      }
+    },
+    "quick_search": {
+      "placeholder": "Type collection name...",
+      "searching": "🔍 Searching for '{query}'...",
+      "found_multiple": "Found multiple matches. Choose one:"
+    }
   },
   "quick_access": {
     "title": "⚡ **Quick Access**\n\nChoose from popular actions below:"
