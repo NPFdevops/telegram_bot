@@ -73,19 +73,15 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
         # Get welcome message in user's language
         welcome_message = get_text(user.id, 'welcome.greeting', name=user.first_name)
         
-        # Create quick action buttons
+        # Create main menu buttons
         keyboard = [
             [
-                InlineKeyboardButton(get_text(user.id, 'welcome.quick_actions.popular_collections'), callback_data='quick_popular'),
-                InlineKeyboardButton(get_text(user.id, 'welcome.quick_actions.top_rankings'), callback_data='quick_rankings')
+                InlineKeyboardButton('🏆 Top Rankings', callback_data='main_rankings'),
+                InlineKeyboardButton('🔍 Search Collection', callback_data='main_search')
             ],
             [
-                InlineKeyboardButton(get_text(user.id, 'welcome.quick_actions.set_alert'), callback_data='quick_alert'),
-                InlineKeyboardButton(get_text(user.id, 'welcome.quick_actions.tutorial'), callback_data='quick_tutorial')
-            ],
-            [
-                InlineKeyboardButton(get_text(user.id, 'welcome.quick_actions.help'), callback_data='quick_help'),
-                InlineKeyboardButton('🎛️ Main Menu', callback_data='main_menu')
+                InlineKeyboardButton('📊 Daily Digest', callback_data='menu_digest'),
+                InlineKeyboardButton('⚙️ More Options', callback_data='more_options')
             ]
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
@@ -767,7 +763,15 @@ async def quick_actions_callback(update: Update, context: ContextTypes.DEFAULT_T
         user = update.effective_user
         callback_data = query.data
         
-        if callback_data == 'quick_popular':
+        # Handle new main menu options
+        if callback_data == 'main_rankings':
+            await rankings_command_from_callback(query, user.id)
+        elif callback_data == 'main_search':
+            await show_collection_search(query, user.id)
+        elif callback_data == 'more_options':
+            await show_more_options_menu(query, user.id)
+        # Handle legacy quick actions for backward compatibility
+        elif callback_data == 'quick_popular':
             await show_popular_collections(query, user.id)
         elif callback_data == 'quick_rankings':
             # Redirect to rankings command
@@ -798,6 +802,9 @@ async def quick_actions_callback(update: Update, context: ContextTypes.DEFAULT_T
             await show_popular_collections(query, user.id)
         elif callback_data == 'main_menu':
             await show_main_menu(query, user.id)
+        elif callback_data == 'back_to_main':
+            # Navigate back to the new main menu structure
+            await show_start_menu(query, user.id)
         elif callback_data == 'help_price':
             await show_price_help(query, user.id)
         elif callback_data == 'help_rankings':
@@ -1057,6 +1064,64 @@ async def show_main_menu(query, user_id: int) -> None:
         
     except Exception as e:
         logger.error(f"Error in show_main_menu: {e}")
+        error_message = get_text(user_id, 'errors.general')
+        await query.edit_message_text(error_message)
+
+
+async def show_start_menu(query, user_id: int) -> None:
+    """
+    Display the main start menu structure.
+    """
+    try:
+        welcome_message = get_text(user_id, 'welcome.greeting', name="")
+        
+        # Create main menu buttons
+        keyboard = [
+            [
+                InlineKeyboardButton('🏆 Top Rankings', callback_data='main_rankings'),
+                InlineKeyboardButton('🔍 Search Collection', callback_data='main_search')
+            ],
+            [
+                InlineKeyboardButton('📊 Daily Digest', callback_data='menu_digest'),
+                InlineKeyboardButton('⚙️ More Options', callback_data='more_options')
+            ]
+        ]
+        
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        await query.edit_message_text(welcome_message, reply_markup=reply_markup, parse_mode='Markdown')
+        
+    except Exception as e:
+        logger.error(f"Error in show_start_menu: {e}")
+        error_message = get_text(user_id, 'errors.general')
+        await query.edit_message_text(error_message)
+
+
+async def show_more_options_menu(query, user_id: int) -> None:
+    """
+    Display the More Options submenu with additional features.
+    """
+    try:
+        menu_text = "⚙️ **More Options**\n\nChoose from additional features:"
+        
+        keyboard = [
+            [
+                InlineKeyboardButton('🔥 Popular Collections', callback_data='quick_popular'),
+                InlineKeyboardButton('🚨 Set Alerts', callback_data='quick_alert')
+            ],
+            [
+                InlineKeyboardButton('📚 Tutorial', callback_data='quick_tutorial'),
+                InlineKeyboardButton('❓ Help', callback_data='quick_help')
+            ],
+            [
+                InlineKeyboardButton('🔙 Back to Main Menu', callback_data='back_to_main')
+            ]
+        ]
+        
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        await query.edit_message_text(menu_text, reply_markup=reply_markup, parse_mode='Markdown')
+        
+    except Exception as e:
+        logger.error(f"Error in show_more_options_menu: {e}")
         error_message = get_text(user_id, 'errors.general')
         await query.edit_message_text(error_message)
 
