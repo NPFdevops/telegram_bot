@@ -1,16 +1,38 @@
 {
   "welcome": {
-    "greeting": "🤖 你好 {name}！\n\n欢迎使用NFT市场洞察机器人！我在这里帮助您跟踪NFT收藏品、设置价格提醒并及时了解最新的市场趋势。\n\n使用 /help 查看可用命令。",
-    "language_set": "语言已设置为中文 🇨🇳"
+    "greeting": "🤖 你好 {name}！\n\n欢迎使用NFT市场洞察机器人！我在这里帮助您跟踪NFT收藏品、设置价格提醒并及时了解最新的市场趋势。\n\n✨ **让我们开始：**\n\n🎯 快速操作：\n• 💰 查看底价\n• 🏆 浏览热门收藏\n• 🔔 设置价格提醒\n• 🌍 更改语言\n\n选择下面的选项或使用 /help 查看所有命令！",
+    "language_set": "语言已设置为中文 🇨🇳",
+    "tutorial": {
+      "title": "🎓 **快速教程**\n\n",
+      "step1": "**步骤 1：** 💰 查看收藏价格\n使用 `/price cryptopunks` 获取底价信息",
+      "step2": "**步骤 2：** 🏆 浏览排行榜\n使用 `/rankings` 查看按交易量排名的热门收藏",
+      "step3": "**步骤 3：** 🔔 设置价格提醒\n使用 `/alerts add cryptopunks 50` 获取通知",
+      "step4": "**步骤 4：** 🌍 选择您的语言\n使用 `/language` 切换语言",
+      "complete": "🎉 一切就绪！尝试任何命令开始使用。"
+    },
+    "quick_actions": {
+      "title": "🚀 **快速操作**",
+      "popular_collections": "📈 热门收藏",
+      "top_rankings": "🏆 热门排行",
+      "set_alert": "🔔 设置提醒",
+      "tutorial": "🎓 教程",
+      "help": "❓ 帮助"
+    }
   },
   "help": {
-    "title": "🤖 **NFT机器人帮助**\n\n可用命令：",
+    "title": "🤖 **NFT 机器人帮助**\n\n可用命令：",
     "commands": {
-      "/price [收藏]": "💰 获取任何NFT收藏的地板价",
-      "/rankings": "🏆 按交易量查看顶级NFT收藏",
-      "/alerts": "🔔 管理您的价格提醒（最多10个）",
+      "/price [收藏]": "💰 获取任何 NFT 收藏的底价",
+      "/rankings": "🏆 按交易量查看顶级 NFT 收藏",
+      "/alerts": "🔔 管理您的价格提醒（最多 10 个）",
       "/language": "🌍 更改机器人语言",
-      "/help": "❓ 显示此帮助信息"
+      "/help": "❓ 显示此帮助消息",
+      "start": "🚀 启动机器人并查看欢迎消息",
+      "help": "❓ 显示此帮助消息",
+      "price": "💰 获取任何 NFT 收藏的底价",
+      "rankings": "🏆 按交易量查看顶级 NFT 收藏",
+      "alerts": "🔔 管理您的价格提醒（最多 10 个）",
+      "language": "🌍 更改机器人语言"
     },
     "usage": "💡 **示例：**\n• `/price cryptopunks` - 获取CryptoPunks地板价\n• `/alerts add bored-ape-yacht-club 50` - 设置50 ETH提醒\n• `/rankings` - 浏览顶级收藏",
     "detailed": {
@@ -261,7 +283,7 @@
       },
       "cryptokitties": {
         "name": "CryptoKitties",
-        "description": "开启NFT热潮的原创收藏猫咪",
+        "description": "开启NFT heats of original collection of cats",
         "tags": ["blue_chip", "recommended"]
       },
       "loot-for-adventurers": {
@@ -372,5 +394,40 @@
   },
   "quick_access": {
     "title": "⚡ <b>快速访问收藏品</b>\n\n选择一个热门收藏品查看其当前市场数据："
+  },
+  "rankings": {
+    "loading": "⏳ 正在加载顶级收藏品...",
+    "loading_next": "正在加载下一页...",
+    "title": "🏆 **顶级 NFT 收藏品**\n\n",
+    "title_next": "🏆 **顶级 NFT 收藏品（第2页）**\n\n",
+    "item": "{rank}. {name}\n   💰 底价：{floor} ETH\n   📊 24小时交易量：{volume} ETH\n\n",
+    "footer": "💡 点击收藏品名称查看详细分析",
+    "next_button": "➡️ 下一页",
+    "back_button": "⬅️ 上一页",
+    "no_more": "📄 没有更多收藏品可显示",
+    "no_data": "❌ 没有可用的排名数据",
+    "error": "❌ 加载排名时出错。请重试。"
+  },
+  "menus": {
+    "main": {
+      "title": "🏠 **主菜单**\n\n选择一个选项：",
+      "market_data": "📊 市场数据",
+      "collections": "🎨 收藏品",
+      "alerts": "🔔 提醒",
+      "settings": "⚙️ 设置",
+      "help": "❓ 帮助"
+    }
+  },
+  "navigation": {
+    "back": "⬅️ 返回"
+  },
+  "common": {
+    "back": "⬅️ 返回",
+    "error": "⚠️ 发生意外错误。请稍后重试。"
+  },
+  "errors": {
+    "general": "❌ 出现问题。请重试。",
+    "invalid_command": "❌ 无效命令。请重试。",
+    "api_error": "❌ API 错误。请稍后重试。"
   }
 }

@@ -1,7 +1,23 @@
 {
   "welcome": {
-    "greeting": "🤖 ¡Hola {name}!\n\n¡Bienvenido al Bot de Información del Mercado NFT! Estoy aquí para ayudarte a rastrear colecciones NFT, configurar alertas de precios y mantenerte actualizado con las últimas tendencias del mercado.\n\nUsa /help para ver los comandos disponibles.",
-    "language_set": "Idioma configurado a Español 🇪🇸"
+    "greeting": "🤖 ¡Hola {name}!\n\n¡Bienvenido al Bot de Información del Mercado NFT! Estoy aquí para ayudarte a rastrear colecciones NFT, configurar alertas de precios y mantenerte actualizado con las últimas tendencias del mercado.\n\n✨ **Empecemos:**\n\n🎯 Acciones Rápidas:\n• 💰 Verificar precios mínimos\n• 🏆 Explorar mejores colecciones\n• 🔔 Configurar alertas de precio\n• 🌍 Cambiar idioma\n\n¡Elige una opción abajo o usa /help para todos los comandos!",
+    "language_set": "Idioma configurado a Español 🇪🇸",
+    "tutorial": {
+      "title": "🎓 **Tutorial Rápido**\n\n",
+      "step1": "**Paso 1:** 💰 Verificar Precios de Colección\nUsa `/price cryptopunks` para obtener información del precio mínimo",
+      "step2": "**Paso 2:** 🏆 Explorar Rankings\nUsa `/rankings` para ver las mejores colecciones por volumen",
+      "step3": "**Paso 3:** 🔔 Configurar Alertas de Precio\nUsa `/alerts add cryptopunks 50` para recibir notificaciones",
+      "step4": "**Paso 4:** 🌍 Elige Tu Idioma\nUsa `/language` para cambiar idiomas",
+      "complete": "🎉 ¡Todo listo! Prueba cualquier comando para empezar."
+    },
+    "quick_actions": {
+      "title": "🚀 **Acciones Rápidas**",
+      "popular_collections": "📈 Colecciones Populares",
+      "top_rankings": "🏆 Mejores Rankings",
+      "set_alert": "🔔 Configurar Alerta",
+      "tutorial": "🎓 Tutorial",
+      "help": "❓ Ayuda"
+    }
   },
   "help": {
     "title": "🤖 **Ayuda del Bot NFT**\n\nComandos disponibles:",
@@ -10,7 +26,13 @@
       "/rankings": "🏆 Ver las mejores colecciones NFT por volumen",
       "/alerts": "🔔 Gestionar tus alertas de precio (hasta 10)",
       "/language": "🌍 Cambiar idioma del bot",
-      "/help": "❓ Mostrar este mensaje de ayuda"
+      "/help": "❓ Mostrar este mensaje de ayuda",
+      "start": "🚀 Iniciar el bot y ver mensaje de bienvenida",
+      "help": "❓ Mostrar este mensaje de ayuda",
+      "price": "💰 Obtener precio mínimo de cualquier colección NFT",
+      "rankings": "🏆 Ver las mejores colecciones NFT por volumen",
+      "alerts": "🔔 Gestionar tus alertas de precio (hasta 10)",
+      "language": "🌍 Cambiar idioma del bot"
     },
     "usage": "💡 **Ejemplos:**\n• `/price cryptopunks` - Obtener precio mínimo de CryptoPunks\n• `/alerts add bored-ape-yacht-club 50` - Establecer alerta a 50 ETH\n• `/rankings` - Explorar las mejores colecciones",
     "detailed": {
@@ -373,5 +395,40 @@
   },
   "quick_access": {
     "title": "⚡ <b>Acceso Rápido a Colecciones</b>\n\nSelecciona una colección popular para ver sus datos actuales del mercado:"
+  },
+  "rankings": {
+    "loading": "⏳ Cargando las mejores colecciones...",
+    "loading_next": "Cargando siguiente página...",
+    "title": "🏆 **Mejores Colecciones NFT**\n\n",
+    "title_next": "🏆 **Mejores Colecciones NFT (Página 2)**\n\n",
+    "item": "{rank}. {name}\n   💰 Precio mínimo: {floor} ETH\n   📊 Volumen 24h: {volume} ETH\n\n",
+    "footer": "💡 Haz clic en los nombres de las colecciones para análisis detallados",
+    "next_button": "➡️ Siguiente Página",
+    "back_button": "⬅️ Página Anterior",
+    "no_more": "📄 No hay más colecciones para mostrar",
+    "no_data": "❌ No hay datos de ranking disponibles",
+    "error": "❌ Error al cargar rankings. Inténtalo de nuevo."
+  },
+  "menus": {
+    "main": {
+      "title": "🏠 **Menú Principal**\n\nElige una opción:",
+      "market_data": "📊 Datos del Mercado",
+      "collections": "🎨 Colecciones",
+      "alerts": "🔔 Alertas",
+      "settings": "⚙️ Configuración",
+      "help": "❓ Ayuda"
+    }
+  },
+  "navigation": {
+    "back": "⬅️ Atrás"
+  },
+  "common": {
+    "back": "⬅️ Atrás",
+    "error": "⚠️ Ocurrió un error inesperado. Inténtalo de nuevo más tarde."
+  },
+  "errors": {
+    "general": "❌ Algo salió mal. Inténtalo de nuevo.",
+    "invalid_command": "❌ Comando inválido. Inténtalo de nuevo.",
+    "api_error": "❌ Error de API. Inténtalo de nuevo más tarde."
   }
 }

@@ -26,7 +26,13 @@
       "/rankings": "🏆 View top NFT collections by volume",
       "/alerts": "🔔 Manage your price alerts (up to 10)",
       "/language": "🌍 Change bot language",
-      "/help": "❓ Show this help message"
+      "/help": "❓ Show this help message",
+      "start": "🚀 Start the bot and see welcome message",
+      "help": "❓ Show this help message",
+      "price": "💰 Get floor price for any NFT collection",
+      "rankings": "🏆 View top NFT collections by volume",
+      "alerts": "🔔 Manage your price alerts (up to 10)",
+      "language": "🌍 Change bot language"
     },
     "usage": "💡 **Examples:**\n• `/price cryptopunks` - Get CryptoPunks floor price\n• `/alerts add bored-ape-yacht-club 50` - Set alert at 50 ETH\n• `/rankings` - Browse top collections",
     "detailed": {
@@ -464,5 +470,46 @@
         "tags": ["blue_chip", "recommended"]
       }
     }
+  },
+  "rankings": {
+    "loading": "⏳ Loading top collections...",
+    "loading_next": "Loading next page...",
+    "title": "🏆 **Top NFT Collections**\n\n",
+    "title_next": "🏆 **Top NFT Collections (Page 2)**\n\n",
+    "item": "{rank}. {name}\n   💰 Floor: {floor} ETH\n   📊 24h Volume: {volume} ETH\n\n",
+    "footer": "💡 Click collection names for detailed analytics",
+    "next_button": "➡️ Next Page",
+    "back_button": "⬅️ Previous Page",
+    "no_more": "📄 No more collections to show",
+    "no_data": "❌ No ranking data available",
+    "error": "❌ Error loading rankings. Please try again."
+  },
+  "search": {
+    "instructions": "🔍 **Search Collections**\n\nType the name of any NFT collection to get instant price data and market insights."
+  },
+  "quick_access": {
+    "title": "⚡ **Quick Access**\n\nChoose from popular actions below:"
+  },
+  "menus": {
+    "main": {
+      "title": "🏠 **Main Menu**\n\nChoose an option:",
+      "market_data": "📊 Market Data",
+      "collections": "🎨 Collections",
+      "alerts": "🔔 Alerts",
+      "settings": "⚙️ Settings",
+      "help": "❓ Help"
+    }
+  },
+  "navigation": {
+    "back": "⬅️ Back"
+  },
+  "common": {
+    "back": "⬅️ Back",
+    "error": "⚠️ An unexpected error occurred. Please try again later."
+  },
+  "errors": {
+    "general": "❌ Something went wrong. Please try again.",
+    "invalid_command": "❌ Invalid command. Please try again.",
+    "api_error": "❌ API error. Please try again later."
   }
 }
