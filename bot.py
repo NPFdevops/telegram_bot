@@ -1756,7 +1756,7 @@ async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE) -> N
             logger.error(f"Failed to send error message to user: {e}")
 
 
-async def main() -> None:
+def main() -> None:
     """
     Main function to initialize and run the bot.
     Supports both polling (local) and webhook (Heroku) modes.
@@ -1790,9 +1790,18 @@ async def main() -> None:
         # Log bot startup
         logger.info("Bot is starting...")
         
-        # Start digest scheduler
-        await start_digest_scheduler(application.bot)
-        logger.info("Digest scheduler started")
+        # Start digest scheduler in the background
+        async def start_scheduler():
+            await start_digest_scheduler(application.bot)
+            logger.info("Digest scheduler started")
+        
+        # Start the digest scheduler
+        import threading
+        def run_scheduler():
+            asyncio.run(start_scheduler())
+        
+        scheduler_thread = threading.Thread(target=run_scheduler, daemon=True)
+        scheduler_thread.start()
         
         if HEROKU_APP_NAME:
             logger.info(f"Starting bot in hybrid mode (polling + web server) on port {PORT}")
@@ -1829,13 +1838,6 @@ async def main() -> None:
         print(f"Error starting bot: {e}")
         raise
     finally:
-        # Stop digest scheduler
-        try:
-            await stop_digest_scheduler()
-            logger.info("Digest scheduler stopped")
-        except Exception as e:
-            logger.error(f"Error stopping digest scheduler: {e}")
-        
         # Cleanup storage on shutdown
         try:
             cleanup_storage()
