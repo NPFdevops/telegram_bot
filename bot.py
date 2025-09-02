@@ -1568,16 +1568,29 @@ def main() -> None:
         
         if HEROKU_APP_NAME:
             logger.info(f"Starting bot in hybrid mode (polling + web server) on port {PORT}")
-            # Run both polling and a simple web server for Heroku
-            # This satisfies Heroku's requirement to bind to PORT while using polling for updates
-            application.run_webhook(
-                listen="0.0.0.0",
-                port=PORT,
-                url_path="/health",  # Simple health check endpoint
-                webhook_url=None,  # No webhook, just web server
-                drop_pending_updates=True,
-                poll_interval=1.0  # Enable polling
-            )
+            # Start a simple web server to satisfy Heroku's PORT requirement
+            import threading
+            from http.server import HTTPServer, BaseHTTPRequestHandler
+            
+            class HealthHandler(BaseHTTPRequestHandler):
+                def do_GET(self):
+                    self.send_response(200)
+                    self.send_header('Content-type', 'text/plain')
+                    self.end_headers()
+                    self.wfile.write(b'Bot is running')
+                
+                def log_message(self, format, *args):
+                    pass  # Suppress HTTP server logs
+            
+            # Start HTTP server in a separate thread
+            server = HTTPServer(('0.0.0.0', PORT), HealthHandler)
+            server_thread = threading.Thread(target=server.serve_forever, daemon=True)
+            server_thread.start()
+            logger.info(f"Health check server started on port {PORT}")
+            
+            # Run bot in polling mode
+            logger.info("Starting bot polling...")
+            application.run_polling(drop_pending_updates=True)
         else:
             logger.info("Starting bot in polling mode (local development)")
             # Run the bot until the user presses Ctrl-C
