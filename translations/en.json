@@ -350,12 +350,50 @@
        }
      }
   },
+  "digest": {
+    "title": "📰 **Daily Digest**\n\nGet a daily summary of NFT market activity delivered to your Telegram.",
+    "status_enabled": "✅ **Daily Digest: ENABLED**\n\n📅 Delivery Time: {time} UTC\n📊 Content: Daily ranking snapshot\n\n💡 You'll receive a daily market summary at your preferred time.",
+    "status_disabled": "❌ **Daily Digest: DISABLED**\n\n📊 Content: Daily ranking snapshot\n\n💡 Enable to receive daily market summaries.",
+    "toggle_on": "✅ Daily digest enabled! You'll receive daily market summaries at {time} UTC.",
+    "toggle_off": "❌ Daily digest disabled. You won't receive daily summaries anymore.",
+    "time_updated": "⏰ Digest delivery time updated to {time} UTC.",
+    "time_selection": "⏰ **Select Delivery Time**\n\nChoose when you'd like to receive your daily digest (UTC time):",
+    "current_settings": "📋 **Current Digest Settings**\n\nStatus: {status}\nDelivery Time: {time} UTC\nContent: Daily ranking snapshot",
+    "daily_title": "Daily NFT Market Digest",
+    "top_collections": "Top 5 Collections Today",
+    "market_summary": "Market Summary",
+    "notable_mentions": "Notable Mentions",
+    "explore_more": "Want to explore more? Use /rankings for full market data",
+    "manage_settings": "Manage your digest settings with /digest",
+    "help": "📰 **Daily Digest Help**\n\nThe daily digest feature sends you a summary of NFT market activity once per day at your preferred time.\n\n**Features:**\n• Daily ranking snapshot\n• Top collections by volume\n• Market highlights\n• Delivered via Telegram\n\n**Commands:**\n• Toggle on/off\n• Set delivery time\n• View current settings",
+    "sample_content": "📰 **Daily NFT Market Digest**\n📅 {date}\n\n🏆 **Top Collections (24h Volume)**\n\n1. CryptoPunks - 1,234 ETH\n2. Bored Ape Yacht Club - 987 ETH\n3. Azuki - 654 ETH\n4. Doodles - 432 ETH\n5. Moonbirds - 321 ETH\n\n📊 **Market Highlights**\n• Total Volume: 15,678 ETH\n• Active Collections: 2,345\n• Top Sale: 150 ETH\n\n🔗 [View Full Analytics](https://nftpricefloor.com)",
+    "delivery_success": "📰 Daily digest delivered successfully!",
+    "delivery_error": "❌ Error delivering daily digest. Will retry later.",
+    "buttons": {
+      "enable": "✅ Enable Digest",
+      "disable": "❌ Disable Digest",
+      "set_time": "⏰ Set Time",
+      "preview": "👁️ Preview",
+      "back": "⬅️ Back"
+    },
+    "times": {
+      "00:00": "🌙 Midnight (00:00 UTC)",
+      "06:00": "🌅 Early Morning (06:00 UTC)",
+      "08:00": "☀️ Morning (08:00 UTC)",
+      "12:00": "🌞 Noon (12:00 UTC)",
+      "16:00": "🌤️ Afternoon (16:00 UTC)",
+      "18:00": "🌆 Evening (18:00 UTC)",
+      "20:00": "🌃 Night (20:00 UTC)",
+      "22:00": "🌙 Late Night (22:00 UTC)"
+    }
+  },
   "menus": {
     "main": {
       "title": "🎛️ **Main Menu**\n\nChoose a category:",
       "market_data": "📊 Market Data",
       "collections": "🖼️ Collections",
       "alerts": "🔔 Alerts",
+      "digest": "📰 Daily Digest",
       "settings": "⚙️ Settings",
       "help": "❓ Help & Tutorial"
     },
@@ -379,6 +417,13 @@
       "add_alert": "➕ Add New Alert",
       "quick_alerts": "⚡ Quick Alert Setup",
       "settings": "⚙️ Alert Settings"
+    },
+    "digest_menu": {
+      "title": "📰 **Daily Digest**\n\nManage your daily market summary:",
+      "toggle": "🔄 Toggle On/Off",
+      "set_time": "⏰ Set Delivery Time",
+      "preview": "👁️ Preview Digest",
+      "settings": "⚙️ Digest Settings"
     }
   },
   "popular_collections": {

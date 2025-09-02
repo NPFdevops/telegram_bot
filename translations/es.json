@@ -429,14 +429,59 @@
     "no_data": "❌ No hay datos de ranking disponibles",
     "error": "❌ Error al cargar rankings. Inténtalo de nuevo."
   },
+  "digest": {
+    "title": "📰 **Resumen Diario**\n\nRecibe un resumen diario de la actividad del mercado NFT en tu Telegram.",
+    "status_enabled": "✅ **Resumen Diario: ACTIVADO**\n\n📅 Hora de Entrega: {time} UTC\n📊 Contenido: Instantánea de rankings diarios\n\n💡 Recibirás un resumen diario del mercado a tu hora preferida.",
+    "status_disabled": "❌ **Resumen Diario: DESACTIVADO**\n\n📊 Contenido: Instantánea de rankings diarios\n\n💡 Activa para recibir resúmenes diarios del mercado.",
+    "toggle_on": "✅ ¡Resumen diario activado! Recibirás resúmenes diarios del mercado a las {time} UTC.",
+    "toggle_off": "❌ Resumen diario desactivado. Ya no recibirás resúmenes diarios.",
+    "time_updated": "⏰ Hora de entrega del resumen actualizada a las {time} UTC.",
+    "time_selection": "⏰ **Seleccionar Hora de Entrega**\n\nElige cuándo te gustaría recibir tu resumen diario (hora UTC):",
+    "current_settings": "📋 **Configuración Actual del Resumen**\n\nEstado: {status}\nHora de Entrega: {time} UTC\nContenido: Instantánea de rankings diarios",
+    "daily_title": "Resumen Diario del Mercado NFT",
+    "top_collections": "Top 5 Colecciones de Hoy",
+    "market_summary": "Resumen del Mercado",
+    "notable_mentions": "Menciones Destacadas",
+    "explore_more": "¿Quieres explorar más? Usa /rankings para datos completos del mercado",
+    "manage_settings": "Gestiona tu configuración de resumen con /digest",
+    "help": "📰 **Ayuda del Resumen Diario**\n\nLa función de resumen diario te envía un resumen de la actividad del mercado NFT una vez al día a tu hora preferida.\n\n**Características:**\n• Instantánea de rankings diarios\n• Mejores colecciones por volumen\n• Destacados del mercado\n• Entregado vía Telegram\n\n**Comandos:**\n• Activar/desactivar\n• Establecer hora de entrega\n• Ver configuración actual",
+    "sample_content": "📰 **Resumen Diario del Mercado NFT**\n📅 {date}\n\n🏆 **Mejores Colecciones (Volumen 24h)**\n\n1. CryptoPunks - 1,234 ETH\n2. Bored Ape Yacht Club - 987 ETH\n3. Azuki - 654 ETH\n4. Doodles - 432 ETH\n5. Moonbirds - 321 ETH\n\n📊 **Destacados del Mercado**\n• Volumen Total: 15,678 ETH\n• Colecciones Activas: 2,345\n• Venta Principal: 150 ETH\n\n🔗 [Ver Análisis Completo](https://nftpricefloor.com)",
+    "delivery_success": "📰 ¡Resumen diario entregado exitosamente!",
+    "delivery_error": "❌ Error al entregar el resumen diario. Se reintentará más tarde.",
+    "buttons": {
+      "enable": "✅ Activar Resumen",
+      "disable": "❌ Desactivar Resumen",
+      "set_time": "⏰ Establecer Hora",
+      "preview": "👁️ Vista Previa",
+      "back": "⬅️ Atrás"
+    },
+    "times": {
+      "00:00": "🌙 Medianoche (00:00 UTC)",
+      "06:00": "🌅 Madrugada (06:00 UTC)",
+      "08:00": "☀️ Mañana (08:00 UTC)",
+      "12:00": "🌞 Mediodía (12:00 UTC)",
+      "16:00": "🌤️ Tarde (16:00 UTC)",
+      "18:00": "🌆 Atardecer (18:00 UTC)",
+      "20:00": "🌃 Noche (20:00 UTC)",
+      "22:00": "🌙 Noche Tardía (22:00 UTC)"
+    }
+  },
   "menus": {
     "main": {
       "title": "🏠 **Menú Principal**\n\nElige una opción:",
       "market_data": "📊 Datos del Mercado",
       "collections": "🎨 Colecciones",
       "alerts": "🔔 Alertas",
+      "digest": "📰 Resumen Diario",
       "settings": "⚙️ Configuración",
       "help": "❓ Ayuda"
+    },
+    "digest_menu": {
+      "title": "📰 **Resumen Diario**\n\nGestiona tu resumen diario del mercado:",
+      "toggle": "🔄 Activar/Desactivar",
+      "set_time": "⏰ Establecer Hora de Entrega",
+      "preview": "👁️ Vista Previa del Resumen",
+      "settings": "⚙️ Configuración del Resumen"
     }
   },
   "navigation": {

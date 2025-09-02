@@ -814,6 +814,8 @@ async def quick_actions_callback(update: Update, context: ContextTypes.DEFAULT_T
                 await show_popular_collections(query, user.id)
             elif menu_type == 'alerts':
                 await show_alert_setup(query, user.id)
+            elif menu_type == 'digest':
+                await show_digest_menu(query, user.id)
             elif menu_type == 'settings':
                 await language_command_from_callback(query, user.id)
         elif callback_data.startswith('collections_page_'):
@@ -1041,9 +1043,10 @@ async def show_main_menu(query, user_id: int) -> None:
             ],
             [
                 InlineKeyboardButton(get_text(user_id, 'menus.main.alerts'), callback_data='menu_alerts'),
-                InlineKeyboardButton(get_text(user_id, 'menus.main.settings'), callback_data='menu_settings')
+                InlineKeyboardButton(get_text(user_id, 'menus.main.digest'), callback_data='menu_digest')
             ],
             [
+                InlineKeyboardButton(get_text(user_id, 'menus.main.settings'), callback_data='menu_settings'),
                 InlineKeyboardButton(get_text(user_id, 'menus.main.help'), callback_data='quick_help')
             ]
         ]
@@ -1223,6 +1226,9 @@ async def show_alert_setup(query, user_id: int) -> None:
             [
                 InlineKeyboardButton("📋 View My Alerts", callback_data='alerts_list'),
                 InlineKeyboardButton("⚡ Quick Setup", callback_data='quick_popular')
+            ],
+            [
+                InlineKeyboardButton("📰 Daily Digest", callback_data='menu_digest')
             ],
             [
                 InlineKeyboardButton(f"🏠 {get_text(user_id, 'common.back')}", callback_data='main_menu')
@@ -1521,6 +1527,219 @@ async def setup_alert_from_callback(query, user_id: int, collection_slug: str) -
         await query.edit_message_text(error_message, reply_markup=reply_markup)
 
 
+# Import user storage module
+from user_storage import (
+    get_digest_settings, set_digest_settings, toggle_digest_enabled, 
+    set_digest_time as storage_set_digest_time, init_storage, cleanup_storage
+)
+from digest_scheduler import start_digest_scheduler, stop_digest_scheduler
+
+async def digest_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """
+    Handle the /digest command.
+    Shows digest settings and allows users to toggle on/off.
+    """
+    try:
+        user = update.effective_user
+        await show_digest_menu(update.message, user.id)
+        logger.info(f"User {user.id} ({user.username}) used digest command")
+    except Exception as e:
+        logger.error(f"Error in digest_command: {e}")
+        error_message = get_text(user.id, 'errors.general') if 'user' in locals() else "Sorry, something went wrong. Please try again later."
+        await update.message.reply_text(error_message)
+
+async def digest_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """
+    Handle digest-related callback queries.
+    """
+    try:
+        query = update.callback_query
+        await query.answer()
+        
+        user = update.effective_user
+        callback_data = query.data
+        
+        if callback_data == 'digest_toggle':
+            await toggle_digest(query, user.id)
+        elif callback_data == 'digest_set_time':
+            await show_digest_time_selection(query, user.id)
+        elif callback_data.startswith('digest_time_'):
+            time_str = callback_data.replace('digest_time_', '')
+            await set_digest_time(query, user.id, time_str)
+        elif callback_data == 'digest_preview':
+            await show_digest_preview(query, user.id)
+        elif callback_data == 'digest_settings':
+            await show_digest_settings(query, user.id)
+        elif callback_data == 'digest_menu':
+            await show_digest_menu(query, user.id)
+            
+    except Exception as e:
+        logger.error(f"Error in digest_callback: {e}")
+        try:
+            error_message = get_text(update.effective_user.id, 'errors.general')
+            await query.edit_message_text(error_message)
+        except:
+            pass
+
+async def show_digest_menu(message_or_query, user_id: int) -> None:
+    """
+    Display the digest menu with current status and options.
+    """
+    try:
+        # Get current digest settings
+        user_settings = get_digest_settings(user_id)
+        
+        if user_settings['enabled']:
+            status_text = get_text(user_id, 'digest.status_enabled', time=user_settings['time'])
+            toggle_button_text = get_text(user_id, 'digest.buttons.disable')
+        else:
+            status_text = get_text(user_id, 'digest.status_disabled')
+            toggle_button_text = get_text(user_id, 'digest.buttons.enable')
+        
+        keyboard = [
+            [InlineKeyboardButton(toggle_button_text, callback_data='digest_toggle')],
+            [InlineKeyboardButton(get_text(user_id, 'digest.buttons.set_time'), callback_data='digest_set_time')],
+            [InlineKeyboardButton(get_text(user_id, 'digest.buttons.preview'), callback_data='digest_preview')],
+            [InlineKeyboardButton(get_text(user_id, 'navigation.back'), callback_data='main_menu')]
+        ]
+        
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        
+        if hasattr(message_or_query, 'edit_message_text'):
+            await message_or_query.edit_message_text(status_text, reply_markup=reply_markup, parse_mode='Markdown')
+        else:
+            await message_or_query.reply_text(status_text, reply_markup=reply_markup, parse_mode='Markdown')
+            
+    except Exception as e:
+        logger.error(f"Error in show_digest_menu: {e}")
+        error_message = get_text(user_id, 'errors.general')
+        if hasattr(message_or_query, 'edit_message_text'):
+            await message_or_query.edit_message_text(error_message)
+        else:
+            await message_or_query.reply_text(error_message)
+
+async def toggle_digest(query, user_id: int) -> None:
+    """
+    Toggle digest on/off for the user.
+    """
+    try:
+        enabled = toggle_digest_enabled(user_id)
+        user_settings = get_digest_settings(user_id)
+        
+        if enabled:
+            message = get_text(user_id, 'digest.toggle_on', time=user_settings['time'])
+        else:
+            message = get_text(user_id, 'digest.toggle_off')
+        
+        await query.edit_message_text(message, parse_mode='Markdown')
+        
+        # Show menu again after a brief delay
+        await asyncio.sleep(2)
+        await show_digest_menu(query, user_id)
+        
+    except Exception as e:
+        logger.error(f"Error in toggle_digest: {e}")
+        error_message = get_text(user_id, 'errors.general')
+        await query.edit_message_text(error_message)
+
+async def show_digest_time_selection(query, user_id: int) -> None:
+    """
+    Show time selection options for digest delivery.
+    """
+    try:
+        time_text = get_text(user_id, 'digest.time_selection')
+        
+        # Get available times from translations
+        times = get_text(user_id, 'digest.times')
+        
+        keyboard = []
+        time_keys = ['00:00', '06:00', '08:00', '12:00', '16:00', '18:00', '20:00', '22:00']
+        
+        # Create rows of 2 buttons each
+        for i in range(0, len(time_keys), 2):
+            row = []
+            for j in range(2):
+                if i + j < len(time_keys):
+                    time_key = time_keys[i + j]
+                    time_label = times.get(time_key, f"{time_key} UTC")
+                    row.append(InlineKeyboardButton(time_label, callback_data=f'digest_time_{time_key}'))
+            keyboard.append(row)
+        
+        keyboard.append([InlineKeyboardButton(get_text(user_id, 'navigation.back'), callback_data='digest_menu')])
+        
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        await query.edit_message_text(time_text, reply_markup=reply_markup, parse_mode='Markdown')
+        
+    except Exception as e:
+        logger.error(f"Error in show_digest_time_selection: {e}")
+        error_message = get_text(user_id, 'errors.general')
+        await query.edit_message_text(error_message)
+
+async def set_digest_time(query, user_id: int, time_str: str) -> None:
+    """
+    Set the digest delivery time for the user.
+    """
+    try:
+        storage_set_digest_time(user_id, time_str)
+        
+        message = get_text(user_id, 'digest.time_updated', time=time_str)
+        await query.edit_message_text(message, parse_mode='Markdown')
+        
+        # Show menu again after a brief delay
+        await asyncio.sleep(2)
+        await show_digest_menu(query, user_id)
+        
+    except Exception as e:
+        logger.error(f"Error in set_digest_time: {e}")
+        error_message = get_text(user_id, 'errors.general')
+        await query.edit_message_text(error_message)
+
+async def show_digest_preview(query, user_id: int) -> None:
+    """
+    Show a preview of what the digest content looks like.
+    """
+    try:
+        from datetime import datetime
+        current_date = datetime.now().strftime('%B %d, %Y')
+        
+        preview_content = get_text(user_id, 'digest.sample_content', date=current_date)
+        
+        keyboard = [
+            [InlineKeyboardButton(get_text(user_id, 'navigation.back'), callback_data='digest_menu')]
+        ]
+        
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        await query.edit_message_text(preview_content, reply_markup=reply_markup, parse_mode='Markdown')
+        
+    except Exception as e:
+        logger.error(f"Error in show_digest_preview: {e}")
+        error_message = get_text(user_id, 'errors.general')
+        await query.edit_message_text(error_message)
+
+async def show_digest_settings(query, user_id: int) -> None:
+    """
+    Show current digest settings.
+    """
+    try:
+        user_settings = get_digest_settings(user_id)
+        
+        status = "Enabled" if user_settings['enabled'] else "Disabled"
+        settings_text = get_text(user_id, 'digest.current_settings', 
+                               status=status, 
+                               time=user_settings['time'])
+        
+        keyboard = [
+            [InlineKeyboardButton(get_text(user_id, 'navigation.back'), callback_data='digest_menu')]
+        ]
+        
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        await query.edit_message_text(settings_text, reply_markup=reply_markup, parse_mode='Markdown')
+        
+    except Exception as e:
+        logger.error(f"Error in show_digest_settings: {e}")
+        error_message = get_text(user_id, 'errors.general')
+        await query.edit_message_text(error_message)
+
 async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE) -> None:
     """
     Handle errors that occur during bot operation.
@@ -1537,12 +1756,15 @@ async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE) -> N
             logger.error(f"Failed to send error message to user: {e}")
 
 
-def main() -> None:
+async def main() -> None:
     """
     Main function to initialize and run the bot.
     Supports both polling (local) and webhook (Heroku) modes.
     """
     try:
+        # Initialize storage
+        init_storage()
+        
         # Create the Application
         application = Application.builder().token(BOT_TOKEN).build()
         
@@ -1552,12 +1774,14 @@ def main() -> None:
         application.add_handler(CommandHandler("price", price_command))
         application.add_handler(CommandHandler("rankings", rankings_command))
         application.add_handler(CommandHandler("alerts", alerts_command))
+        application.add_handler(CommandHandler("digest", digest_command))
         application.add_handler(CommandHandler("language", language_command))
         # application.add_handler(CommandHandler("top_sales", top_sales_command))  # Temporarily deactivated
         
         # Add callback query handlers
         application.add_handler(CallbackQueryHandler(rankings_callback, pattern='^rankings_'))
         application.add_handler(CallbackQueryHandler(language_callback, pattern='^lang_'))
+        application.add_handler(CallbackQueryHandler(digest_callback, pattern='^digest_'))
         application.add_handler(CallbackQueryHandler(quick_actions_callback, pattern='^quick_|^price_|^alert_|^back_to_|^main_menu$|^menu_|^alerts_list$|^search_collections$|^collections_page_|^help_|^collection_'))
         
         # Add error handler
@@ -1565,6 +1789,10 @@ def main() -> None:
         
         # Log bot startup
         logger.info("Bot is starting...")
+        
+        # Start digest scheduler
+        await start_digest_scheduler(application.bot)
+        logger.info("Digest scheduler started")
         
         if HEROKU_APP_NAME:
             logger.info(f"Starting bot in hybrid mode (polling + web server) on port {PORT}")
@@ -1600,7 +1828,20 @@ def main() -> None:
         logger.error(f"Failed to start bot: {e}")
         print(f"Error starting bot: {e}")
         raise
+    finally:
+        # Stop digest scheduler
+        try:
+            await stop_digest_scheduler()
+            logger.info("Digest scheduler stopped")
+        except Exception as e:
+            logger.error(f"Error stopping digest scheduler: {e}")
+        
+        # Cleanup storage on shutdown
+        try:
+            cleanup_storage()
+        except Exception as e:
+            logger.error(f"Error during storage cleanup: {e}")
 
 
 if __name__ == '__main__':
-    main()
+    asyncio.run(main())

@@ -428,14 +428,59 @@
     "no_data": "❌ 没有可用的排名数据",
     "error": "❌ 加载排名时出错。请重试。"
   },
+  "digest": {
+    "title": "📰 **每日摘要**\n\n在您的Telegram中接收NFT市场活动的每日摘要。",
+    "status_enabled": "✅ **每日摘要：已启用**\n\n📅 投递时间：{time} UTC\n📊 内容：每日排名快照\n\n💡 您将在首选时间收到每日市场摘要。",
+    "status_disabled": "❌ **每日摘要：已禁用**\n\n📊 内容：每日排名快照\n\n💡 启用以接收每日市场摘要。",
+    "toggle_on": "✅ 每日摘要已启用！您将在 {time} UTC 收到每日市场摘要。",
+    "toggle_off": "❌ 每日摘要已禁用。您将不再收到每日摘要。",
+    "time_updated": "⏰ 摘要投递时间已更新为 {time} UTC。",
+    "time_selection": "⏰ **选择投递时间**\n\n选择您希望接收每日摘要的时间（UTC时间）：",
+    "current_settings": "📋 **当前摘要设置**\n\n状态：{status}\n投递时间：{time} UTC\n内容：每日排名快照",
+    "daily_title": "每日NFT市场摘要",
+    "top_collections": "今日前5名收藏",
+    "market_summary": "市场摘要",
+    "notable_mentions": "值得关注",
+    "explore_more": "想要了解更多？使用 /rankings 查看完整市场数据",
+    "manage_settings": "使用 /digest 管理您的摘要设置",
+    "help": "📰 **每日摘要帮助**\n\n每日摘要功能每天在您的首选时间向您发送NFT市场活动摘要。\n\n**功能：**\n• 每日排名快照\n• 按交易量排名的顶级收藏品\n• 市场亮点\n• 通过Telegram投递\n\n**命令：**\n• 开启/关闭\n• 设置投递时间\n• 查看当前设置",
+    "sample_content": "📰 **每日NFT市场摘要**\n📅 {date}\n\n🏆 **顶级收藏品（24小时交易量）**\n\n1. CryptoPunks - 1,234 ETH\n2. Bored Ape Yacht Club - 987 ETH\n3. Azuki - 654 ETH\n4. Doodles - 432 ETH\n5. Moonbirds - 321 ETH\n\n📊 **市场亮点**\n• 总交易量：15,678 ETH\n• 活跃收藏品：2,345\n• 最高成交：150 ETH\n\n🔗 [查看完整分析](https://nftpricefloor.com)",
+    "delivery_success": "📰 每日摘要投递成功！",
+    "delivery_error": "❌ 投递每日摘要时出错。稍后将重试。",
+    "buttons": {
+      "enable": "✅ 启用摘要",
+      "disable": "❌ 禁用摘要",
+      "set_time": "⏰ 设置时间",
+      "preview": "👁️ 预览",
+      "back": "⬅️ 返回"
+    },
+    "times": {
+      "00:00": "🌙 午夜 (00:00 UTC)",
+      "06:00": "🌅 清晨 (06:00 UTC)",
+      "08:00": "☀️ 上午 (08:00 UTC)",
+      "12:00": "🌞 中午 (12:00 UTC)",
+      "16:00": "🌤️ 下午 (16:00 UTC)",
+      "18:00": "🌆 傍晚 (18:00 UTC)",
+      "20:00": "🌃 晚上 (20:00 UTC)",
+      "22:00": "🌙 深夜 (22:00 UTC)"
+    }
+  },
   "menus": {
     "main": {
       "title": "🏠 **主菜单**\n\n选择一个选项：",
       "market_data": "📊 市场数据",
       "collections": "🎨 收藏品",
       "alerts": "🔔 提醒",
+      "digest": "📰 每日摘要",
       "settings": "⚙️ 设置",
       "help": "❓ 帮助"
+    },
+    "digest_menu": {
+      "title": "📰 **每日摘要**\n\n管理您的每日市场摘要：",
+      "toggle": "🔄 开启/关闭",
+      "set_time": "⏰ 设置投递时间",
+      "preview": "👁️ 预览摘要",
+      "settings": "⚙️ 摘要设置"
     }
   },
   "navigation": {
