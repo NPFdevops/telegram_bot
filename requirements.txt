@@ -1,3 +1,4 @@
+# Updated to include webhook support
 python-telegram-bot[webhooks]==20.3
 aiohttp==3.9.1
 gunicorn==21.2.0
