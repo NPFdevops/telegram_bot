@@ -1566,6 +1566,7 @@ def main() -> None:
                 port=port,
                 url_path=BOT_TOKEN,
                 webhook_url=webhook_url,
+                secret_token=BOT_TOKEN[:32],  # Use first 32 chars of token as secret
                 drop_pending_updates=True
             )
         else:
