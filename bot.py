@@ -1541,7 +1541,7 @@ def main() -> None:
         # Add callback query handlers
         application.add_handler(CallbackQueryHandler(rankings_callback, pattern='^rankings_'))
         application.add_handler(CallbackQueryHandler(language_callback, pattern='^lang_'))
-        application.add_handler(CallbackQueryHandler(quick_actions_callback, pattern='^quick_|^price_|^alert_|^back_to_|^main_menu$|^menu_|^alerts_list$|^search_collections$|^collections_page_'))
+        application.add_handler(CallbackQueryHandler(quick_actions_callback, pattern='^quick_|^price_|^alert_|^back_to_|^main_menu$|^menu_|^alerts_list$|^search_collections$|^collections_page_|^help_|^collection_'))
         
         # Add error handler
         application.add_error_handler(error_handler)
