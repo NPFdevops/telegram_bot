@@ -84,7 +84,8 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
                 InlineKeyboardButton(get_text(user.id, 'welcome.quick_actions.tutorial'), callback_data='quick_tutorial')
             ],
             [
-                InlineKeyboardButton(get_text(user.id, 'welcome.quick_actions.help'), callback_data='quick_help')
+                InlineKeyboardButton(get_text(user.id, 'welcome.quick_actions.help'), callback_data='quick_help'),
+                InlineKeyboardButton('🎛️ Main Menu', callback_data='main_menu')
             ]
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
@@ -1846,4 +1847,4 @@ def main() -> None:
 
 
 if __name__ == '__main__':
-    asyncio.run(main())
+    main()
