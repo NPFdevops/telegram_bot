@@ -1525,6 +1525,8 @@ def main() -> None:
     """
     Main function to initialize and run the bot.
     """
+    import os
+    
     try:
         # Create the Application
         application = Application.builder().token(BOT_TOKEN).build()
@@ -1549,8 +1551,26 @@ def main() -> None:
         # Log bot startup
         logger.info("Bot is starting...")
         
-        # Run the bot until the user presses Ctrl-C
-        application.run_polling(drop_pending_updates=True)
+        # Check if running on Heroku (webhook mode) or locally (polling mode)
+        port = int(os.environ.get('PORT', 8000))
+        heroku_app_name = os.environ.get('HEROKU_APP_NAME')
+        
+        if heroku_app_name:
+            # Webhook mode for Heroku
+            webhook_url = f"https://{heroku_app_name}.herokuapp.com/"
+            logger.info(f"Starting bot in webhook mode on port {port}")
+            logger.info(f"Webhook URL: {webhook_url}")
+            
+            application.run_webhook(
+                listen="0.0.0.0",
+                port=port,
+                webhook_url=webhook_url,
+                drop_pending_updates=True
+            )
+        else:
+            # Polling mode for local development
+            logger.info("Starting bot in polling mode")
+            application.run_polling(drop_pending_updates=True)
         
     except Exception as e:
         logger.error(f"Failed to start bot: {e}")
