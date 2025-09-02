@@ -1557,13 +1557,14 @@ def main() -> None:
         
         if heroku_app_name:
             # Webhook mode for Heroku
-            webhook_url = f"https://{heroku_app_name}.herokuapp.com/"
+            webhook_url = f"https://{heroku_app_name}.herokuapp.com/{BOT_TOKEN}"
             logger.info(f"Starting bot in webhook mode on port {port}")
             logger.info(f"Webhook URL: {webhook_url}")
             
             application.run_webhook(
                 listen="0.0.0.0",
                 port=port,
+                url_path=BOT_TOKEN,
                 webhook_url=webhook_url,
                 drop_pending_updates=True
             )
