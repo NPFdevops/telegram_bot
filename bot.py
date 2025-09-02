@@ -494,26 +494,75 @@ async def format_top_sales_message(data: Dict[str, Any], user_id: int) -> str:
     """
     Format top sales data into a readable message.
     """
-    if not data or 'projects' not in data:
+    # Handle both array format and object format
+    if isinstance(data, list):
+        sales = data[:10]  # Show top 10 sales
+    elif isinstance(data, dict) and 'sales' in data:
+        sales = data['sales'][:10]  # Show top 10 sales
+    else:
         return get_text(user_id, 'top_sales.no_data')
     
-    projects = data['projects'][:10]  # Show top 10
+    if not sales:
+        return get_text(user_id, 'top_sales.no_data')
     message_lines = [get_text(user_id, 'top_sales.title')]
     
-    for i, project in enumerate(projects, 1):
-        name = project.get('name', 'Unknown')
-        volume_24h = project.get('volume_24h', 0)
-        floor_price = project.get('floor_price', 0)
+    for i, sale in enumerate(sales, 1):
+        # Extract data from the actual API response structure
+        project = sale.get('project', {})
+        collection_name = project.get('name', 'Unknown')
+        token_id = sale.get('tokenId', '')
+        price_eth = sale.get('nativePrice', 0)
+        price_usd = sale.get('usdPrice', 0)
+        transaction_hash = sale.get('transactionId', '')
+        timestamp = sale.get('timestamp', 0)
         
-        # Format volume and floor price
-        volume_str = f"{volume_24h:.2f} ETH" if volume_24h else "N/A"
-        floor_str = f"{floor_price:.3f} ETH" if floor_price else "N/A"
+        # Calculate time ago from timestamp (microseconds)
+        import datetime
+        if timestamp:
+            try:
+                # Convert microseconds to seconds
+                timestamp_seconds = timestamp / 1000000
+                sale_time = datetime.datetime.fromtimestamp(timestamp_seconds)
+                now = datetime.datetime.now()
+                time_diff = now - sale_time
+                
+                if time_diff.days > 0:
+                    time_ago = f"{time_diff.days}d ago"
+                elif time_diff.seconds > 3600:
+                    hours = time_diff.seconds // 3600
+                    time_ago = f"{hours}h ago"
+                elif time_diff.seconds > 60:
+                    minutes = time_diff.seconds // 60
+                    time_ago = f"{minutes}m ago"
+                else:
+                    time_ago = "Just now"
+            except:
+                time_ago = "Unknown time"
+        else:
+            time_ago = "Unknown time"
         
-        message_lines.append(
-            get_text(user_id, 'top_sales.item_format').format(
-                rank=i, name=name, volume=volume_str, floor=floor_str
-            )
+        # Format prices
+        price_eth_str = f"{price_eth:.3f}" if price_eth else "0"
+        price_usd_str = f"{price_usd:,.0f}" if price_usd else "0"
+        
+        # Create Etherscan link if transaction hash is available
+        etherscan_link = f"https://etherscan.io/tx/{transaction_hash}" if transaction_hash else ""
+        
+        # Format the sale item
+        sale_text = get_text(user_id, 'top_sales.item').format(
+            rank=i,
+            collection=collection_name,
+            token_id=token_id,
+            price=price_eth_str,
+            usd=price_usd_str,
+            time_ago=time_ago
         )
+        
+        # Add Etherscan link if available
+        if etherscan_link:
+            sale_text += f"   🔗 [View Transaction]({etherscan_link})\n"
+        
+        message_lines.append(sale_text)
     
     message_lines.append("")
     message_lines.append(get_text(user_id, 'top_sales.footer'))
@@ -565,13 +614,13 @@ async def top_sales_command(update: Update, context: ContextTypes.DEFAULT_TYPE) 
         data = await fetch_top_sales_cached()
         
         if data:
-            message = format_top_sales_message(data, user_id)
+            message = await format_top_sales_message(data, user_id)
             keyboard = get_top_sales_keyboard(user_id)
             
             await loading_msg.edit_text(
                 message,
                 reply_markup=keyboard,
-                parse_mode='HTML'
+                parse_mode='Markdown'
             )
             log_user_action(user_id, "top_sales_command", "success")
         else:
@@ -2515,13 +2564,13 @@ async def top_sales_callback(update: Update, context: ContextTypes.DEFAULT_TYPE)
             data = await fetch_top_sales_cached()
             
             if data:
-                message = format_top_sales_message(data, user_id)
+                message = await format_top_sales_message(data, user_id)
                 keyboard = get_top_sales_keyboard(user_id)
                 
                 await query.edit_message_text(
                     message,
                     reply_markup=keyboard,
-                    parse_mode='HTML'
+                    parse_mode='Markdown'
                 )
                 log_user_action(user_id, "top_sales_refresh", "success")
             else:

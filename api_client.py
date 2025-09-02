@@ -85,8 +85,9 @@ async def fetch_nftpf_projects(offset: int = 0, limit: int = 10) -> Optional[Dic
 async def fetch_top_sales() -> Optional[Dict[str, Any]]:
     """
     Fetch top NFT sales data from NFTPriceFloor API.
+    Uses the 24h endpoint to get recent top sales.
     """
-    url = f"https://{NFTPF_API_HOST}/projects/top-sales"
+    url = f"https://{NFTPF_API_HOST}/projects/top-sales/24h"
     
     try:
         connector = aiohttp.TCPConnector(ssl=ssl.create_default_context())
@@ -105,8 +106,15 @@ async def fetch_top_sales() -> Optional[Dict[str, Any]]:
                 
                 if response.status == 200:
                     data = await response.json()
-                    projects_count = len(data.get('projects', [])) if data else 0
-                    logger.info(f"Successfully fetched {projects_count} top sales")
+                    # Handle both list and dict formats
+                    if isinstance(data, list):
+                        sales_count = len(data)
+                        logger.info(f"Successfully fetched {sales_count} top sales")
+                    elif isinstance(data, dict):
+                        projects_count = len(data.get('projects', []))
+                        logger.info(f"Successfully fetched {projects_count} top sales")
+                    else:
+                        logger.info("Successfully fetched top sales data")
                     return data
                 elif response.status == 429:
                     raise aiohttp.ClientResponseError(

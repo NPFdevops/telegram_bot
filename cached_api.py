@@ -220,13 +220,16 @@ async def fetch_top_sales_cached() -> List[Dict[str, Any]]:
     try:
         top_sales = await fetch_top_sales()
         
+        if top_sales is None:
+            return None
+            
         # Cache the result
         await cm.cache_manager.set(cache_key, top_sales, CACHE_TTL['top_sales'])
         
         return top_sales
     except Exception as e:
         logger.error(f"Error fetching top sales from API: {e}")
-        return []
+        return None
 
 async def fetch_rankings_cached(offset: int = 0, limit: int = 10) -> List[Dict[str, Any]]:
     """Fetch rankings with caching (using projects data sorted by volume)."""
