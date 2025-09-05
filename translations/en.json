@@ -203,6 +203,7 @@
     "previous": "Previous",
     "page_info": "Page {current} of {total}",
     "confirm": "✅ Confirm",
+    "back_to_help": "❓ Back to Help",
     "network_error": "🌐 Network connection error. Please check your internet and try again.",
     "api_error": "🔧 Service temporarily unavailable. Please try again in a few minutes.",
     "timeout_error": "⏱️ Request timed out. Please try again.",
@@ -647,10 +648,6 @@
   },
   "navigation": {
     "back": "⬅️ Back"
-  },
-  "common": {
-    "back": "⬅️ Back",
-    "error": "⚠️ An unexpected error occurred. Please try again later."
   },
   "errors": {
     "general": "❌ Something went wrong. Please try again.",

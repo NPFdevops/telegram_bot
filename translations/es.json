@@ -1,8 +1,46 @@
 {
   "welcome": {
-    "greeting": "¡Bienvenido al Bot de Información del Mercado NFT! 🎨\n\nTu fuente confiable para precios mínimos de NFT en tiempo real, rankings y alertas de mercado.",
-    "features": "🔥 **Características:**\n• 📊 Precios mínimos en tiempo real\n• 🏆 Rankings dinámicos de colecciones\n• 🔔 Alertas de precios personalizadas (hasta 10)\n• 🌍 Soporte multiidioma\n• 📈 Datos de ventas principales\n\n¡Comienza explorando con los comandos a continuación!",
-    "quick_start": "⚡ **Inicio Rápido:**\n\n🔍 Verificar precio: `/price [nombre de colección]`\n🏆 Ver rankings: `/rankings`\n🔔 Configurar alerta: `/alert [colección] [precio]`\n🌍 Cambiar idioma: `/language`"
+    "greeting": "🤖 ¡Hola {name}!\n\n¡Bienvenido al Bot de Información del Mercado NFT! Estoy aquí para ayudarte a rastrear colecciones NFT, configurar alertas de precios y mantenerte actualizado con las últimas tendencias del mercado.\n\n✨ **Comencemos:**\n\n🎯 Acciones Rápidas:\n• 💰 Verificar precios mínimos\n• 🏆 Explorar mejores colecciones\n• 🔔 Configurar alertas de precios\n• 🌍 Cambiar idioma\n\n¡Elige una opción a continuación o usa /help para todos los comandos!",
+    "language_set": "Idioma configurado a Español 🇪🇸",
+    "tutorial": {
+      "title": "🎓 **Tutorial Rápido**\n\n",
+      "step1": "**Paso 1:** 💰 Verificar Precios de Colecciones\nUsa `/price cryptopunks` para obtener información del precio mínimo",
+      "step2": "**Paso 2:** 🏆 Explorar Rankings\nUsa `/rankings` para ver las mejores colecciones por volumen",
+      "step3": "**Paso 3:** 🔔 Configurar Alertas de Precios\nUsa `/alerts add cryptopunks 50` para recibir notificaciones",
+      "step4": "**Paso 4:** 🌍 Elige Tu Idioma\nUsa `/language` para cambiar idiomas",
+      "complete": "🎉 ¡Todo listo! Prueba cualquier comando para comenzar.",
+      "interactive": {
+        "welcome": "🎓 **¡Bienvenido a NFT Market Insights!**\n\n¡Hagamos un recorrido interactivo rápido para comenzar! ¡Esto solo tomará 2 minutos!\n\n✨ **Lo que aprenderás:**\n• Cómo verificar precios mínimos\n• Explorar mejores colecciones\n• Configurar alertas de precios\n• Navegar por el bot\n\n¿Listo para comenzar?",
+        "step1_title": "📊 **Paso 1: Verificar Precios Mínimos**",
+        "step1_desc": "Los precios mínimos muestran el precio más bajo para cualquier NFT en una colección. ¡Esto es crucial para rastrear el valor!\n\n💡 **Pruébalo ahora:** Haz clic en el botón de abajo para verificar el precio mínimo de CryptoPunks.",
+        "step1_completed": "✅ **¡Genial!** ¡Acabas de verificar un precio mínimo!\n\nObserva cómo obtienes:\n• Precio mínimo actual\n• Porcentaje de cambio en 24h\n• Enlace directo para más detalles\n\n¿Listo para el siguiente paso?",
+        "step2_title": "🏆 **Paso 2: Explorar Rankings**",
+        "step2_desc": "Los rankings muestran las colecciones NFT más populares por volumen, ayudándote a detectar tendencias.\n\n💡 **Pruébalo ahora:** Haz clic abajo para ver las mejores colecciones.",
+        "step2_completed": "✅ **¡Excelente!** ¡Exploraste los rankings!\n\nPuedes:\n• Ver las mejores colecciones por volumen\n• Navegar a través de páginas\n• Obtener información detallada de cualquier colección\n\n¡Continuemos!",
+        "step3_title": "🔔 **Paso 3: Configurar Alertas de Precios**",
+        "step3_desc": "Las alertas de precios te notifican cuando una colección alcanza tu precio objetivo. ¡Puedes configurar hasta 10 alertas!\n\n💡 **Pruébalo ahora:** Configuremos una alerta.",
+        "step3_completed": "✅ **¡Perfecto!** ¡Aprendiste sobre las alertas!\n\nRecuerda:\n• Hasta 10 alertas por usuario\n• Recibe notificaciones instantáneas\n• Gestiona alertas en cualquier momento con /alerts\n\n¡Un paso más!",
+        "step4_title": "🌍 **Paso 4: Idioma y Configuración**",
+        "step4_desc": "¡Personaliza tu experiencia! El bot soporta múltiples idiomas y varias configuraciones.\n\n💡 **Pruébalo ahora:** Revisa las opciones de idioma.",
+        "step4_completed": "✅ **¡Increíble!** ¡Exploraste la configuración!\n\nPuedes:\n• Cambiar idiomas en cualquier momento\n• Personalizar tu experiencia\n• Acceder a ayuda cuando la necesites\n\n¡Estás listo para el paso final!",
+        "final_title": "🎉 **¡Tutorial Completado!**",
+        "final_desc": "¡Felicitaciones! ¡Ahora estás listo para usar NFT Market Insights Bot como un profesional!\n\n🚀 **Resumen rápido:**\n• `/price [colección]` - Verificar precios mínimos\n• `/rankings` - Explorar mejores colecciones\n• `/alerts` - Gestionar alertas de precios\n• `/language` - Cambiar idioma\n• `/help` - Obtener ayuda en cualquier momento\n\n**Consejo profesional:** ¡Usa los botones del menú para acceso rápido a todas las funciones!\n\n¡Feliz trading! 📈",
+        "skip_tutorial": "⏭️ Saltar Tutorial",
+        "next_step": "➡️ Siguiente Paso",
+        "try_feature": "🔥 Probar Esta Función",
+        "continue": "✅ Continuar",
+        "finish_tutorial": "🎯 Finalizar Tutorial",
+        "back_to_menu": "🏠 Volver al Menú"
+      }
+    },
+    "quick_actions": {
+      "title": "🚀 **Acciones Rápidas**",
+      "popular_collections": "📈 Colecciones Populares",
+      "top_rankings": "🏆 Mejores Rankings",
+      "set_alert": "🔔 Configurar Alerta",
+      "tutorial": "🎓 Tutorial",
+      "help": "❓ Ayuda"
+    }
   },
   "help": {
     "title": "📚 **Centro de Ayuda**\n\nAquí tienes todo lo que necesitas saber sobre el bot:",
@@ -106,15 +144,21 @@
     "maintenance": "🔧 El bot está en mantenimiento. Inténtalo de nuevo más tarde."
   },
   "common": {
-    "back": "⬅️ Atrás",
-    "next": "➡️ Siguiente",
-    "cancel": "❌ Cancelar",
+    "loading": "Cargando...",
+    "error": "Error",
+    "success": "Éxito",
+    "cancel": "Cancelar",
+    "back": "Atrás",
+    "next": "Siguiente",
+    "previous": "Anterior",
+    "page_info": "Página {current} de {total}",
     "confirm": "✅ Confirmar",
-    "loading": "⏳ Cargando...",
-    "error": "❌ Error",
-    "success": "✅ Éxito",
-    "warning": "⚠️ Advertencia",
-    "info": "ℹ️ Información"
+    "network_error": "🌐 Error de conexión de red. Verifique su internet e inténtelo de nuevo.",
+    "api_error": "🔧 Servicio temporalmente no disponible. Inténtelo de nuevo en unos minutos.",
+    "timeout_error": "⏱️ Tiempo de espera agotado. Inténtelo de nuevo.",
+    "rate_limit_error": "⏳ Demasiadas solicitudes. Espere un momento e inténtelo de nuevo.",
+    "invalid_input": "❌ Entrada inválida. Verifique su comando e inténtelo de nuevo.",
+    "not_found_error": "🔍 Datos solicitados no encontrados. Verifique el nombre de la colección."
   },
   "navigation": {
     "main_menu": "🏠 Menú Principal",
@@ -261,5 +305,8 @@
       "settings": "⚙️ Configuración",
       "help": "❓ Ayuda"
     }
+  },
+  "common": {
+    "back_to_help": "❓ Volver a Ayuda"
   }
 }

@@ -1081,9 +1081,17 @@ async def language_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) 
                 # Set the new language
                 set_user_language(user.id, language_code)
                 
-                # Send confirmation in the new language
+                # Show confirmation and redirect back to help menu with updated content
                 confirmation_text = get_text(user.id, 'language.changed')
-                await query.edit_message_text(confirmation_text)
+                
+                # Create a keyboard to go back to help menu with updated language
+                keyboard = [
+                    [InlineKeyboardButton(get_text(user.id, 'common.back_to_help'), callback_data='main_help')],
+                    [InlineKeyboardButton(get_text(user.id, 'navigation.back'), callback_data='main_menu')]
+                ]
+                reply_markup = InlineKeyboardMarkup(keyboard)
+                
+                await query.edit_message_text(confirmation_text, reply_markup=reply_markup)
                 
                 logger.info(f"User {user.id} changed language to {language_code}")
             else:
@@ -2090,7 +2098,15 @@ async def language_command_from_callback(query, user_id: int) -> None:
     """
     try:
         language_text = get_text(user_id, 'language.select')
-        keyboard = get_language_options_keyboard()
+        keyboard_options = get_language_options_keyboard()
+        
+        # Arrange buttons in rows (2 per row)
+        keyboard = []
+        for i in range(0, len(keyboard_options), 2):
+            row = []
+            for j in range(i, min(i + 2, len(keyboard_options))):
+                row.append(keyboard_options[j])
+            keyboard.append(row)
         
         # Add back button
         back_button_text = get_text(user_id, 'navigation.back')

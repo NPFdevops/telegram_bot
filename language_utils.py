@@ -60,7 +60,8 @@ def get_user_language(user_id: int) -> str:
     Returns:
         Language code (defaults to 'en' if not set)
     """
-    return user_languages.get(user_id, DEFAULT_LANGUAGE)
+    from user_storage import get_user_language_storage
+    return get_user_language_storage(user_id)
 
 def set_user_language(user_id: int, language_code: str) -> bool:
     """
@@ -76,10 +77,12 @@ def set_user_language(user_id: int, language_code: str) -> bool:
     if language_code not in SUPPORTED_LANGUAGES:
         logger.warning(f"Unsupported language code: {language_code}")
         return False
-        
-    user_languages[user_id] = language_code
-    logger.info(f"Set language for user {user_id} to {language_code}")
-    return True
+    
+    from user_storage import set_user_language_storage
+    success = set_user_language_storage(user_id, language_code)
+    if success:
+        logger.info(f"Set language for user {user_id} to {language_code}")
+    return success
 
 def get_text(user_id: int, key_path: str, **kwargs) -> str:
     """
@@ -135,15 +138,17 @@ def get_language_options_keyboard() -> list:
     Returns:
         List of inline keyboard button data
     """
+    from telegram import InlineKeyboardButton
+    
     keyboard = []
     
     for lang_code, lang_name in SUPPORTED_LANGUAGES.items():
         # Get the flag and name from translations
         flag_and_name = translations.get('en', {}).get('language', {}).get('options', {}).get(lang_code, f"{lang_code.upper()}")
-        keyboard.append({
-            'text': flag_and_name,
-            'callback_data': f'lang_{lang_code}'
-        })
+        keyboard.append(InlineKeyboardButton(
+            text=flag_and_name,
+            callback_data=f'lang_{lang_code}'
+        ))
     
     return keyboard
 
