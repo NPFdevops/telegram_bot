@@ -452,7 +452,7 @@
     "main_menu": "🏠 主菜单"
   },
   "search": {
-    "instructions": "🔍 <b>搜索收藏品</b>\n\n要搜索特定的NFT收藏品，只需输入：\n\n<code>/price [收藏品名称]</code>\n\n例如：\n• <code>/price bored ape</code>\n• <code>/price cryptopunks</code>\n• <code>/price azuki</code>\n\n机器人将找到该收藏品并显示当前底价和市场数据！",
+    "instructions": "🔍 **搜索收藏品**\n\n要获取任何NFT收藏品的即时价格数据和市场洞察，请使用：\n\n`/price [收藏品名称]`\n\n**示例：**\n• `/price cryptopunks`\n• `/price bored ape yacht club`\n• `/price azuki`",
     "advanced": {
       "title": "🔍 **高级搜索**\n\n使用强大的过滤器和建议查找NFT收藏品。",
       "filters": {

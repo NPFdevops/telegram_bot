@@ -8,7 +8,7 @@ from cache_manager import (
     top_sales_cache_key,
     rankings_cache_key
 )
-from api_client import fetch_nftpf_projects, fetch_top_sales
+from api_client import fetch_nftpf_projects, fetch_top_sales, fetch_nftpf_project_by_slug
 import aiohttp
 import json
 
@@ -71,19 +71,13 @@ async def fetch_nftpf_project_by_slug_cached(slug: str) -> Optional[Dict[str, An
     # Cache miss - fetch from API
     logger.debug(f"Cache miss for project: {slug} - fetching from API")
     try:
-        async with aiohttp.ClientSession() as session:
-            url = f"https://api.nftpricefloor.com/v2/projects/{slug}"
-            async with session.get(url) as response:
-                if response.status == 200:
-                    project_data = await response.json()
-                    
-                    # Cache the result
-                    await cm.cache_manager.set(cache_key, project_data, CACHE_TTL['project'])
-                    
-                    return project_data
-                else:
-                    logger.warning(f"API returned status {response.status} for project {slug}")
-                    return None
+        project_data = await fetch_nftpf_project_by_slug(slug)
+        
+        if project_data:
+            # Cache the result
+            await cm.cache_manager.set(cache_key, project_data, CACHE_TTL['project'])
+            
+        return project_data
     except Exception as e:
         logger.error(f"Error fetching project {slug} from API: {e}")
         return None

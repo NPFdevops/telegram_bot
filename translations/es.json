@@ -125,7 +125,7 @@
     "back-to-menu": "🏠 Volver al Menú"
   },
   "search": {
-    "instructions": "🔍 <b>Buscar Colecciones</b>\n\nPara buscar una colección NFT específica, simplemente escribe:\n\n<code>/price [nombre de la colección]</code>\n\nPor ejemplo:\n• <code>/price bored ape</code>\n• <code>/price cryptopunks</code>\n• <code>/price azuki</code>\n\n¡El bot encontrará la colección y te mostrará el precio mínimo actual y datos del mercado!",
+    "instructions": "🔍 **Buscar Colecciones**\n\nPara obtener datos de precios instantáneos e información del mercado de cualquier colección NFT, usa:\n\n`/price [nombre de la colección]`\n\n**Ejemplos:**\n• `/price cryptopunks`\n• `/price bored ape yacht club`\n• `/price azuki`",
     "placeholder": "Buscar colección...",
     "no_results": "No se encontraron resultados",
     "searching": "🔍 Buscando...",

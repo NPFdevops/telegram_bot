@@ -218,7 +218,7 @@
     "back-to-menu": "🏠 Back to Menu"
   },
   "search": {
-    "instructions": "🔍 <b>Search Collections</b>\n\nTo search for a specific NFT collection, simply type:\n\n<code>/price [collection name]</code>\n\nFor example:\n• <code>/price bored ape</code>\n• <code>/price cryptopunks</code>\n• <code>/price azuki</code>\n\nThe bot will find the collection and show you the current floor price and market data!"
+    "instructions": "🔍 **Search Collections**\n\nTo get instant price data and market insights for any NFT collection, use:\n\n`/price [collection name]`\n\n**Examples:**\n• `/price cryptopunks`\n• `/price bored ape yacht club`\n• `/price azuki`"
   },
   "quick_access": {
     "title": "⚡ <b>Quick Access Collections</b>\n\nSelect a popular collection to view its current market data:"
@@ -594,7 +594,7 @@
     "error": "❌ Error loading rankings. Please try again."
   },
   "search": {
-    "instructions": "🔍 **Search Collections**\n\nType the name of any NFT collection to get instant price data and market insights.",
+    "instructions": "🔍 **Search Collections**\n\nTo get instant price data and market insights for any NFT collection, use:\n\n`/price [collection name]`\n\n**Examples:**\n• `/price cryptopunks`\n• `/price bored ape yacht club`\n• `/price azuki`",
     "advanced": {
       "title": "🔍 **Advanced Search**\n\nFind NFT collections with powerful filters and suggestions.",
       "filters": {

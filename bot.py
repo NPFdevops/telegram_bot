@@ -153,23 +153,54 @@ async def search_nftpf_collection(collection_name: str, user_id: int = None, fil
         if user_id:
             add_search_to_history(user_id, collection_name)
         
-        # First get all projects and search for the collection
-        collections_data = await fetch_nftpf_projects_cached(offset=0, limit=200)
+        collection_name_lower = collection_name.lower().strip()
+        
+        # First try direct slug lookup for common collections
+        # Convert collection name to potential slug format
+        potential_slug = collection_name_lower.replace(' ', '-').replace('_', '-')
+        
+        # Try direct slug fetch first
+        logger.info(f"Trying direct slug lookup for '{potential_slug}'")
+        detailed_data = await fetch_nftpf_project_by_slug_cached(potential_slug)
+        if detailed_data:
+            logger.info(f"Found collection via direct slug: {potential_slug}")
+            return detailed_data
+        
+        # Also try some common slug variations
+        slug_variations = [
+            potential_slug,
+            collection_name_lower.replace(' ', ''),  # no spaces
+            collection_name_lower.replace(' ', '_'),  # underscores
+            f"{potential_slug}-nft",  # with -nft suffix
+            f"{potential_slug}-official",  # with -official suffix
+        ]
+        
+        for slug_variant in slug_variations:
+            if slug_variant != potential_slug:  # Skip the one we already tried
+                logger.info(f"Trying slug variation: '{slug_variant}'")
+                detailed_data = await fetch_nftpf_project_by_slug_cached(slug_variant)
+                if detailed_data:
+                    logger.info(f"Found collection via slug variation: {slug_variant}")
+                    return detailed_data
+        
+        # If direct slug lookup fails, try searching through projects list
+        logger.info(f"Direct slug lookup failed, searching through projects list")
+        collections_data = await fetch_nftpf_projects_cached(offset=0, limit=500)  # Increased limit
         
         if not collections_data:
             logger.warning("No collections data received from API")
             return None
         
-        # Handle both 'data' and 'projects' keys for API response compatibility
-        projects = collections_data.get('data', collections_data.get('projects', []))
+        # Extract projects from the response
+        projects = collections_data.get('projects', [])
+        if not projects:
+            projects = collections_data.get('data', [])
+        
         logger.info(f"Searching through {len(projects)} projects for '{collection_name}'")
         
         # Apply filters if provided
         if filters:
             projects = _apply_search_filters(projects, filters)
-        
-        # Search for collection by name (case-insensitive)
-        collection_name_lower = collection_name.lower().strip()
         
         # Try exact match first
         for project in projects:
@@ -375,7 +406,7 @@ async def perform_advanced_search(message_or_query, user_id: int, query: str, fi
 async def price_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """
     Handle the /price command.
-    Get NFT collection floor price and basic information.
+    Get NFT collection floor price and detailed information using the projects/{slug} endpoint.
     """
     try:
         user = update.effective_user
@@ -392,7 +423,7 @@ async def price_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
         searching_text = f"🔍 {get_text(user.id, 'price.searching', collection=collection_name)}"
         searching_msg = await update.message.reply_text(searching_text, parse_mode='Markdown')
         
-        # Search for collection data
+        # First search for collection to get the slug
         collection_data = await search_nftpf_collection(collection_name, user.id)
         
         if not collection_data:
@@ -400,90 +431,125 @@ async def price_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
             await searching_msg.edit_text(not_found_text, parse_mode='Markdown')
             return
         
-        # Extract relevant information from the new API structure
-        stats = collection_data.get('stats', {})
-        details = collection_data.get('details', {})
+        # Get the slug from search results
+        slug = collection_data.get('slug') or collection_data.get('details', {}).get('slug')
+        if not slug:
+            not_found_text = get_text(user.id, 'price.not_found', collection=collection_name)
+            await searching_msg.edit_text(not_found_text, parse_mode='Markdown')
+            return
+        
+        # Fetch detailed project data using the projects/{slug} endpoint
+        project_data = await fetch_nftpf_project_by_slug_cached(slug)
+        
+        if not project_data:
+            error_text = get_text(user.id, 'price.error')
+            await searching_msg.edit_text(error_text, parse_mode='Markdown')
+            return
+        
+        # Extract data from the detailed project response
+        stats = project_data.get('stats', {})
+        details = project_data.get('details', {})
         
         name = details.get('name', 'Unknown')
-        slug = details.get('slug', '')
-        ranking = details.get('ranking', 0)
         
-        # Floor price information
+        # Floor price information from stats
         floor_info = stats.get('floorInfo', {})
         floor_price_eth = floor_info.get('currentFloorNative', 0)
         floor_price_usd = floor_info.get('currentFloorUsd', 0)
         
-        # Supply and other stats
+        # 24h change from floor temporality
+        floor_temporality = stats.get('floorTemporalityUsd', {})
+        change_24h = floor_temporality.get('diff24h', 0)
+        
+        # Volume and sales data from sales temporality
+        sales_temporality = stats.get('salesTemporalityUsd', {})
+        volume_data = sales_temporality.get('volume', {})
+        count_data = sales_temporality.get('count', {})
+        average_data = sales_temporality.get('average', {})
+        
+        volume_24h_usd = volume_data.get('val24h', 0)
+        sales_24h = count_data.get('val24h', 0)
+        avg_sale_price_usd = average_data.get('val24h', 0)
+        
+        # Convert volume from USD to ETH (approximate)
+        volume_24h_eth = volume_24h_usd / floor_price_usd if floor_price_usd > 0 else 0
+        avg_sale_price_eth = avg_sale_price_usd / floor_price_usd * floor_price_eth if floor_price_usd > 0 and floor_price_eth > 0 else 0
+        
+        # Supply information from stats
         total_supply = stats.get('totalSupply', 0)
         listed_count = stats.get('listedCount', 0)
-        total_owners = stats.get('totalOwners', 0)
         
-        # 24h price changes
-        floor_temp_native = stats.get('floorTemporalityNative', {})
-        floor_temp_usd = stats.get('floorTemporalityUsd', {})
-        price_change_24h_native = floor_temp_native.get('diff24h', 0)
-        price_change_24h_usd = floor_temp_usd.get('diff24h', 0)
+        # Official links from social media
+        social_media = details.get('socialMedia', [])
+        website = ''
+        twitter = ''
+        discord = ''
         
-        # 24h volume and sales
-        sales_temp_native = stats.get('salesTemporalityNative', {})
-        volume_24h = sales_temp_native.get('volume', {}).get('val24h', 0)
-        sales_24h = sales_temp_native.get('count', {}).get('val24h', 0)
+        for social in social_media:
+            if social.get('name') == 'website':
+                website = social.get('url', '')
+            elif social.get('name') == 'twitter':
+                twitter = social.get('url', '')
+            elif social.get('name') == 'discord':
+                discord = social.get('url', '')
         
-        # Create hyperlink for collection name
-        collection_link = f"[{name}](https://nftpricefloor.com/{slug}?=tbot)" if slug else name
+        # Create hyperlink for collection name to NFTPriceFloor
+        collection_link = f"[{name}](https://nftpricefloor.com/{slug}?utm_source=telegram_bot)"
         
-        # Format the response
-        response_text = f"📊 **{collection_link}**\n"
-        if ranking:
-            response_text += f"🏆 **Rank:** #{ranking}\n"
-        response_text += "\n"
+        # Format the response according to user specifications
+        response_text = f"📊 **{collection_link}**\n\n"
         
         # Floor price in ETH and USD
-        if floor_price_eth:
-            floor_eth = f"{floor_price_eth:.3f} ETH"
-            floor_usd = f"${floor_price_usd:,.0f}" if floor_price_usd else "N/A"
-            response_text += f"🏠 **Floor Price:** {floor_eth} ({floor_usd})\n"
+        if floor_price_eth > 0:
+            response_text += f"💎 **Floor Price:** {floor_price_eth:.3f} ETH (${floor_price_usd:,.0f})\n"
+        else:
+            response_text += f"💎 **Floor Price:** Not available\n"
         
-        # 24h price change with dynamic visual indicators
-        if price_change_24h_native:
-            sign_native = "+" if price_change_24h_native >= 0 else ""
-            sign_usd = "+" if price_change_24h_usd >= 0 else ""
-            
-            # Dynamic emoji based on change percentage
-            if price_change_24h_native > 15:
-                change_emoji = "🚀"  # Strong positive
-            elif price_change_24h_native > 5:
-                change_emoji = "📈"  # Positive
-            elif price_change_24h_native > 0:
-                change_emoji = "📊"  # Slight positive
-            elif price_change_24h_native > -5:
-                change_emoji = "📉"  # Slight negative
-            elif price_change_24h_native > -15:
-                change_emoji = "⬇️"  # Negative
+        # 24h Change in %
+        if change_24h != 0:
+            sign = "+" if change_24h >= 0 else ""
+            emoji = "📈" if change_24h >= 0 else "📉"
+            response_text += f"{emoji} **24h Change:** {sign}{change_24h:.1f}%\n"
+        else:
+            response_text += f"📊 **24h Change:** 0.0%\n"
+        
+        # Volume in ETH (number of sales)
+        if volume_24h_eth > 0:
+            if volume_24h_eth >= 1000:
+                volume_str = f"{volume_24h_eth/1000:.1f}K ETH"
             else:
-                change_emoji = "💥"  # Strong negative
-                
-            response_text += f"{change_emoji} **24h Change:** {sign_native}{price_change_24h_native:.1f}% {sign_usd}${price_change_24h_usd:.0f}\n"
+                volume_str = f"{volume_24h_eth:.2f} ETH"
+            response_text += f"💰 **Volume:** {volume_str} ({sales_24h} sales)\n"
+        else:
+            response_text += f"💰 **Volume:** 0 ETH (0 sales)\n"
         
-        # 24h volume and sales
-        if volume_24h:
-            if volume_24h >= 1000:
-                volume_str = f"{volume_24h/1000:.1f}K ETH"
-            else:
-                volume_str = f"{volume_24h:.2f} ETH"
-            response_text += f"💰 **24h Volume:** {volume_str} ({sales_24h} sales)\n"
+        # Listings (total supply)
+        if total_supply > 0:
+            listings_text = f"{listed_count:,}" if listed_count > 0 else "0"
+            response_text += f"📋 **Listings:** {listings_text} ({total_supply:,} total supply)\n"
         
-        # Supply and ownership info
-        if total_supply:
-            response_text += f"📦 **Total Supply:** {total_supply:,}\n"
-        if listed_count:
-            response_text += f"🏪 **Listed:** {listed_count:,}\n"
-        if total_owners:
-            response_text += f"👥 **Owners:** {total_owners:,}\n"
+        # Average Sale Price
+        if avg_sale_price_eth > 0:
+            response_text += f"📊 **Avg Sale:** {avg_sale_price_eth:.3f} ETH\n"
+        
+        # Official Links
+        links = []
+        if website:
+            links.append(f"[Website]({website})")
+        if twitter:
+            links.append(f"[Twitter]({twitter})")
+        if discord:
+            links.append(f"[Discord]({discord})")
+        
+        if links:
+            response_text += f"\n🔗 **Official Links:** {' • '.join(links)}\n"
+        
+        # Link to the chart (NFTPriceFloor collection page)
+        response_text += f"\n📈 [View Chart & Analytics](https://nftpricefloor.com/{slug}?utm_source=telegram_bot)\n"
         
         response_text += "\n🔄 *Data from NFTPriceFloor API*"
         
-        await searching_msg.edit_text(response_text, parse_mode='Markdown')
+        await searching_msg.edit_text(response_text, parse_mode='Markdown', disable_web_page_preview=True)
         log_user_action(update.effective_user.id, "price_command", f"collection: {collection_name}")
         
     except Exception as e:
@@ -717,7 +783,7 @@ async def rankings_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -
         loading_msg = await update.message.reply_text(loading_text)
         
         # Fetch NFT collections data from NFTPriceFloor API
-        collections_data = await fetch_nftpf_projects_cached(offset=0, limit=10)
+        collections_data = await fetch_rankings_cached(offset=0, limit=10)
         
         if not collections_data:
             error_text = get_text(user.id, 'rankings.error')
@@ -757,38 +823,42 @@ async def rankings_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -
             sales_24h = count_data.get('val24h', 0)
             sales_count_native = sales_temp_native.get('count', {}).get('val24h', 0)
             
-            # Create hyperlink for collection name
-            collection_link = f"[{name}](https://nftpricefloor.com/{slug}?=tbot)"
-            
-            # Format floor price in ETH and USD
-            floor_eth = f"{floor_price_eth:.1f} ETH" if floor_price_eth else "N/A"
-            floor_usd = f"${floor_price_usd:,.0f}" if floor_price_usd else "N/A"
-            floor_display = f"{floor_eth} ({floor_usd})" if floor_price_eth and floor_price_usd else "N/A"
-            
             # Format 24h price change
             if price_change_24h:
                 sign = "+" if price_change_24h >= 0 else ""
-                price_change_display = f"{sign}{price_change_24h:.1f}% (${price_change_24h_usd:.1f})"
+                price_change_native = f"{sign}{price_change_24h:.1f}%"
+                price_change_usd = f"({sign}{price_change_24h_usd:.1f}%)"
+                price_change_display = f"{price_change_native} {price_change_usd}"
             else:
                 price_change_display = "N/A"
+            
+            # Format floor price in ETH and USD
+            floor_eth = f"{floor_price_eth:.1f} ETH" if floor_price_eth else "N/A"
+            floor_usd = f"(${floor_price_usd:,.0f})" if floor_price_usd else "(N/A)"
+            floor_display = f"{floor_eth} {floor_usd}" if floor_price_eth and floor_price_usd else "N/A"
             
             # Format 24h volume and sales
             vol_24h = f"{volume_24h:.1f} ETH" if volume_24h else "N/A"
             sales_count_display = f"{int(sales_24h)} sales" if sales_24h else "0 sales"
             volume_sales_display = f"{vol_24h} ({sales_count_display})" if volume_24h else "N/A"
             
+            # Create hyperlink for collection name
+            collection_link = f"[{name}](https://nftpricefloor.com/{slug}?=tbot)"
+            
             response_text += (
                 f"{i}. {collection_link}\n"
-                f"   📈 24h Change: {price_change_display}\n"
-                f"   🏠 Floor: {floor_display}\n"
-                f"   📊 24h Volume: {volume_sales_display}\n\n"
+                f"    📈 24h Change: {price_change_display}\n"
+                f"    🏠 Floor: {floor_display}\n"
+                f"    📊 24h Volume: {volume_sales_display}\n\n"
             )
         
-        # Add pagination button
+        # Add pagination and back to menu buttons
         next_button_text = get_text(user.id, 'rankings.next_button')
-        keyboard = [[
-            InlineKeyboardButton(next_button_text, callback_data="rankings_next_10")
-        ]]
+        back_to_menu_text = get_text(user.id, 'common.back')
+        keyboard = [
+            [InlineKeyboardButton(next_button_text, callback_data="rankings_next_10")],
+            [InlineKeyboardButton(back_to_menu_text, callback_data="main_menu")]
+        ]
         reply_markup = InlineKeyboardMarkup(keyboard)
         
         footer_text = get_text(user.id, 'rankings.footer')
@@ -820,15 +890,15 @@ async def rankings_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) 
             await query.edit_message_text(loading_text)
             
             # Fetch next 10 collections
-            collections_data = await fetch_nftpf_projects_cached(offset=10, limit=10)
+            collections_data = await fetch_rankings_cached(offset=10, limit=10)
             
             if not collections_data:
                 error_text = get_text(user.id, 'rankings.error')
                 await query.edit_message_text(error_text)
                 return
             
-            # Handle both 'data' and 'projects' keys for API response compatibility
-            projects = collections_data.get('data', collections_data.get('projects', []))
+            # fetch_rankings_cached returns a list directly
+            projects = collections_data if isinstance(collections_data, list) else []
             if not projects:
                 no_more_text = get_text(user.id, 'rankings.no_more')
                 await query.edit_message_text(no_more_text)
@@ -860,38 +930,42 @@ async def rankings_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) 
                 sales_24h = count_data.get('val24h', 0)
                 sales_count_native = sales_temp_native.get('count', {}).get('val24h', 0)
                 
-                # Create hyperlink for collection name
-                collection_link = f"[{name}](https://nftpricefloor.com/{slug}?=tbot)"
-                
-                # Format floor price in ETH and USD
-                floor_eth = f"{floor_price_eth:.1f} ETH" if floor_price_eth else "N/A"
-                floor_usd = f"${floor_price_usd:,.0f}" if floor_price_usd else "N/A"
-                floor_display = f"{floor_eth} ({floor_usd})" if floor_price_eth and floor_price_usd else "N/A"
-                
                 # Format 24h price change
                 if price_change_24h:
                     sign = "+" if price_change_24h >= 0 else ""
-                    price_change_display = f"{sign}{price_change_24h:.1f}% (${price_change_24h_usd:.1f})"
+                    price_change_native = f"{sign}{price_change_24h:.1f}%"
+                    price_change_usd = f"({sign}{price_change_24h_usd:.1f}%)"
+                    price_change_display = f"{price_change_native} {price_change_usd}"
                 else:
                     price_change_display = "N/A"
+                
+                # Format floor price in ETH and USD
+                floor_eth = f"{floor_price_eth:.1f} ETH" if floor_price_eth else "N/A"
+                floor_usd = f"(${floor_price_usd:,.0f})" if floor_price_usd else "(N/A)"
+                floor_display = f"{floor_eth} {floor_usd}" if floor_price_eth and floor_price_usd else "N/A"
                 
                 # Format 24h volume and sales
                 vol_24h = f"{volume_24h:.1f} ETH" if volume_24h else "N/A"
                 sales_count = f"{int(sales_24h)} sales" if sales_24h else "0 sales"
                 volume_sales_display = f"{vol_24h} ({sales_count})" if volume_24h else "N/A"
                 
+                # Create hyperlink for collection name
+                collection_link = f"[{name}](https://nftpricefloor.com/{slug}?=tbot)"
+                
                 response_text += (
                     f"{i}. {collection_link}\n"
-                    f"   📈 24h Change: {price_change_display}\n"
-                    f"   🏠 Floor: {floor_display}\n"
-                    f"   📊 24h Volume: {volume_sales_display}\n\n"
+                    f"    📈 24h Change: {price_change_display}\n"
+                    f"    🏠 Floor: {floor_display}\n"
+                    f"    📊 24h Volume: {volume_sales_display}\n\n"
                 )
             
-            # Add back button
+            # Add back and back to menu buttons
             back_button_text = get_text(user.id, 'rankings.back_button')
-            keyboard = [[
-                InlineKeyboardButton(back_button_text, callback_data="rankings_back_10")
-            ]]
+            back_to_menu_text = get_text(user.id, 'common.back')
+            keyboard = [
+                [InlineKeyboardButton(back_button_text, callback_data="rankings_back_10")],
+                [InlineKeyboardButton(back_to_menu_text, callback_data="main_menu")]
+            ]
             reply_markup = InlineKeyboardMarkup(keyboard)
             
             footer_text = get_text(user.id, 'rankings.footer')
@@ -905,8 +979,8 @@ async def rankings_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) 
             log_user_action(user.id, "rankings_next", "success")
             
         elif query.data == "rankings_back_10":
-            # Go back to top 10
-            await rankings_command(update, context)
+            # Go back to top 10 - use callback-friendly version
+            await rankings_command_from_callback(query, user.id)
             log_user_action(user.id, "rankings_back", "success")
             
     except Exception as e:
@@ -1076,7 +1150,7 @@ async def quick_actions_callback(update: Update, context: ContextTypes.DEFAULT_T
             await show_quick_access_collections(query, user.id)
         elif callback_data.startswith('collection_'):
             collection_slug = callback_data.replace('collection_', '')
-            await show_collection_actions(query, user.id, collection_slug)
+            await get_collection_price_from_callback(query, user.id, collection_slug)
         elif callback_data.startswith('price_'):
             collection_slug = callback_data.replace('price_', '')
             await get_collection_price_from_callback(query, user.id, collection_slug)
@@ -1085,6 +1159,9 @@ async def quick_actions_callback(update: Update, context: ContextTypes.DEFAULT_T
             await setup_alert_from_callback(query, user.id, collection_slug)
         elif callback_data.startswith('popular_page_'):
             page = int(callback_data.replace('popular_page_', ''))
+            await show_popular_collections(query, user.id, page)
+        elif callback_data.startswith('collections_page_'):
+            page = int(callback_data.replace('collections_page_', ''))
             await show_popular_collections(query, user.id, page)
         elif callback_data == 'back_to_popular':
             await show_popular_collections(query, user.id)
@@ -1699,29 +1776,24 @@ async def show_popular_collections(query, user_id: int, page: int = 0) -> None:
             
             collections_text += f"**{name}** {indicators_str}\n{description}\n\n"
             
-            # Add action buttons for each collection
-            view_price_text = get_text(user_id, 'popular_collections.view_price')
-            set_alert_text = get_text(user_id, 'popular_collections.set_alert')
-            
+            # Add collection button that shows full price information
             keyboard.append([
-                InlineKeyboardButton(f"{view_price_text} {name[:15]}...", callback_data=f'price_{slug}'),
-                InlineKeyboardButton(set_alert_text, callback_data=f'alert_{slug}')
+                InlineKeyboardButton(f"🎨 {name}", callback_data=f'collection_{slug}')
             ])
         
         # Add navigation buttons
         nav_buttons = []
         if page > 0:
-            nav_buttons.append(InlineKeyboardButton("⬅️ Previous", callback_data=f'collections_page_{page-1}'))
+            nav_buttons.append(InlineKeyboardButton("⬅️ Previous", callback_data=f'popular_page_{page-1}'))
         if end_idx < len(curated_collections):
-            nav_buttons.append(InlineKeyboardButton("Next ➡️", callback_data=f'collections_page_{page+1}'))
+            nav_buttons.append(InlineKeyboardButton("Next ➡️", callback_data=f'popular_page_{page+1}'))
         
         if nav_buttons:
             keyboard.append(nav_buttons)
         
-        # Add search and quick access buttons
+        # Add search button
         keyboard.append([
-            InlineKeyboardButton("🔍 Search Collections", callback_data='search_collections'),
-            InlineKeyboardButton("⚡ Quick Access", callback_data='quick_access')
+            InlineKeyboardButton("🔍 Search Collections", callback_data='search_collections')
         ])
         
         # Add menu navigation
@@ -2041,15 +2113,15 @@ async def rankings_command_from_callback(query, user_id: int) -> None:
         await query.edit_message_text(loading_message)
         
         # Fetch rankings data
-        rankings_data = await fetch_nftpf_projects_cached(offset=0, limit=10)
+        rankings_data = await fetch_rankings_cached(offset=0, limit=10)
         
         if not rankings_data:
             error_message = get_text(user_id, 'rankings.error')
             await query.edit_message_text(error_message)
             return
         
-        # Handle both 'data' and 'projects' keys for API response compatibility
-        projects = rankings_data.get('data', rankings_data.get('projects', []))
+        # fetch_rankings_cached returns a list directly
+        projects = rankings_data if isinstance(rankings_data, list) else []
         if not projects:
             no_data_message = get_text(user_id, 'rankings.no_data')
             await query.edit_message_text(no_data_message)
@@ -2065,18 +2137,50 @@ async def rankings_command_from_callback(query, user_id: int) -> None:
             floor_info = stats.get('floorInfo', {})
             
             floor_price_eth = floor_info.get('currentFloorNative', 0)
+            floor_price_usd = floor_info.get('currentFloorUsd', 0)
             
-            # Get 24h volume from salesTemporalityNative
+            # Get 24h price change from floorTemporalityUsd and floorTemporalityNative
+            floor_temp_usd = stats.get('floorTemporalityUsd', {})
+            floor_temp_native = stats.get('floorTemporalityNative', {})
+            price_change_24h = floor_temp_native.get('diff24h', 0)
+            price_change_24h_usd = floor_temp_usd.get('diff24h', 0)
+            
+            # Get 24h volume and sales count
+            volume_data = stats.get('volume', {})
+            count_data = stats.get('count', {})
             sales_temp_native = stats.get('salesTemporalityNative', {})
-            volume_24h = sales_temp_native.get('volume', {}).get('val24h', 0) if isinstance(sales_temp_native.get('volume'), dict) else 0
+            volume_24h = sales_temp_native.get('volume', {}).get('val24h', 0)
+            sales_24h = count_data.get('val24h', 0)
+            sales_count_native = sales_temp_native.get('count', {}).get('val24h', 0)
+            
+            # Format 24h price change
+            if price_change_24h:
+                sign = "+" if price_change_24h >= 0 else ""
+                price_change_native = f"{sign}{price_change_24h:.1f}%"
+                price_change_usd = f"({sign}{price_change_24h_usd:.1f}%)"
+                price_change_display = f"{price_change_native} {price_change_usd}"
+            else:
+                price_change_display = "N/A"
+            
+            # Format floor price in ETH and USD
+            floor_eth = f"{floor_price_eth:.1f} ETH" if floor_price_eth else "N/A"
+            floor_usd = f"(${floor_price_usd:,.0f})" if floor_price_usd else "(N/A)"
+            floor_display = f"{floor_eth} {floor_usd}" if floor_price_eth and floor_price_usd else "N/A"
+            
+            # Format 24h volume and sales
+            vol_24h = f"{volume_24h:.1f} ETH" if volume_24h else "N/A"
+            sales_count_display = f"{int(sales_24h)} sales" if sales_24h else "0 sales"
+            volume_sales_display = f"{vol_24h} ({sales_count_display})" if volume_24h else "N/A"
             
             # Create hyperlink for collection name
             collection_link = f"[{name}](https://nftpricefloor.com/{slug}?=tbot)"
             
-            rankings_text += get_text(user_id, 'rankings.item',
-                                    rank=i, name=collection_link, 
-                                    floor=f"{floor_price_eth:.2f}" if floor_price_eth else "N/A",
-                                    volume=f"{volume_24h:.2f}" if volume_24h else "N/A")
+            rankings_text += (
+                f"{i}. {collection_link}\n"
+                f"    📈 24h Change: {price_change_display}\n"
+                f"    🏠 Floor: {floor_display}\n"
+                f"    📊 24h Volume: {volume_sales_display}\n\n"
+            )
         
         rankings_text += "\n" + get_text(user_id, 'rankings.footer')
         
@@ -2134,98 +2238,112 @@ async def get_collection_price_from_callback(query, user_id: int, collection_slu
         searching_message = get_text(user_id, 'price.searching', collection=collection_slug)
         await query.edit_message_text(searching_message)
         
-        # Search for collection data using the same method as /price command
-        collection_data = await search_nftpf_collection(collection_slug)
+        # Fetch detailed project data using the projects/{slug} endpoint (same as /price command)
+        project_data = await fetch_nftpf_project_by_slug_cached(collection_slug)
         
-        if not collection_data:
+        if not project_data:
             not_found_message = get_text(user_id, 'price.not_found', collection=collection_slug)
             keyboard = [[InlineKeyboardButton(get_text(user_id, 'common.back'), callback_data='back_to_popular')]]
             reply_markup = InlineKeyboardMarkup(keyboard)
             await query.edit_message_text(not_found_message, reply_markup=reply_markup)
             return
         
-        # Extract relevant information from the new API structure (same as /price command)
-        stats = collection_data.get('stats', {})
-        details = collection_data.get('details', {})
+        # Extract data from the detailed project response (same as /price command)
+        stats = project_data.get('stats', {})
+        details = project_data.get('details', {})
         
         name = details.get('name', 'Unknown')
-        slug = details.get('slug', '')
-        ranking = details.get('ranking', 0)
         
-        # Floor price information
+        # Floor price information from stats
         floor_info = stats.get('floorInfo', {})
         floor_price_eth = floor_info.get('currentFloorNative', 0)
         floor_price_usd = floor_info.get('currentFloorUsd', 0)
         
-        # Supply and other stats
+        # 24h change from floor temporality
+        floor_temporality = stats.get('floorTemporalityUsd', {})
+        change_24h = floor_temporality.get('diff24h', 0)
+        
+        # Volume and sales data from sales temporality
+        sales_temporality = stats.get('salesTemporalityUsd', {})
+        volume_data = sales_temporality.get('volume', {})
+        count_data = sales_temporality.get('count', {})
+        average_data = sales_temporality.get('average', {})
+        
+        volume_24h_usd = volume_data.get('val24h', 0)
+        sales_24h = count_data.get('val24h', 0)
+        avg_sale_price_usd = average_data.get('val24h', 0)
+        
+        # Convert volume from USD to ETH (approximate)
+        volume_24h_eth = volume_24h_usd / floor_price_usd if floor_price_usd > 0 else 0
+        avg_sale_price_eth = avg_sale_price_usd / floor_price_usd * floor_price_eth if floor_price_usd > 0 and floor_price_eth > 0 else 0
+        
+        # Supply information from stats
         total_supply = stats.get('totalSupply', 0)
         listed_count = stats.get('listedCount', 0)
-        total_owners = stats.get('totalOwners', 0)
         
-        # 24h price changes
-        floor_temp_native = stats.get('floorTemporalityNative', {})
-        floor_temp_usd = stats.get('floorTemporalityUsd', {})
-        price_change_24h_native = floor_temp_native.get('diff24h', 0)
-        price_change_24h_usd = floor_temp_usd.get('diff24h', 0)
+        # Official links from social media
+        social_media = details.get('socialMedia', [])
+        website = ''
+        twitter = ''
+        discord = ''
         
-        # 24h volume and sales
-        sales_temp_native = stats.get('salesTemporalityNative', {})
-        volume_24h = sales_temp_native.get('volume', {}).get('val24h', 0)
-        sales_24h = sales_temp_native.get('count', {}).get('val24h', 0)
+        for social in social_media:
+            if social.get('name') == 'website':
+                website = social.get('url', '')
+            elif social.get('name') == 'twitter':
+                twitter = social.get('url', '')
+            elif social.get('name') == 'discord':
+                discord = social.get('url', '')
         
         # Create hyperlink for collection name
-        collection_link = f"[{name}](https://nftpricefloor.com/{slug}?=tbot)" if slug else name
+        slug = details.get('slug', '')
+        collection_link = f"https://nftpricefloor.com/collection/{slug}"
         
-        # Format the response (identical to /price command)
-        response_text = f"📊 **{collection_link}**\n"
-        if ranking:
-            response_text += f"🏆 **Rank:** #{ranking}\n"
-        response_text += "\n"
+        # Format the response text to match /price command exactly
+        response_text = f"📊 **{name}**\n\n"
         
-        # Floor price in ETH and USD
-        if floor_price_eth:
-            floor_eth = f"{floor_price_eth:.3f} ETH"
-            floor_usd = f"${floor_price_usd:,.0f}" if floor_price_usd else "N/A"
-            response_text += f"🏠 **Floor Price:** {floor_eth} ({floor_usd})\n"
+        if floor_price_eth > 0:
+            response_text += f"💎 **Floor Price:** {floor_price_eth:.4f} ETH (${floor_price_usd:,.2f})\n"
+        else:
+            response_text += f"💎 **Floor Price:** Not available\n"
         
-        # 24h price change with dynamic visual indicators
-        if price_change_24h_native:
-            sign_native = "+" if price_change_24h_native >= 0 else ""
-            sign_usd = "+" if price_change_24h_usd >= 0 else ""
-            
-            # Dynamic emoji based on change percentage
-            if price_change_24h_native > 15:
-                change_emoji = "🚀"  # Strong positive
-            elif price_change_24h_native > 5:
-                change_emoji = "📈"  # Positive
-            elif price_change_24h_native > 0:
-                change_emoji = "📊"  # Slight positive
-            elif price_change_24h_native > -5:
-                change_emoji = "📉"  # Slight negative
-            elif price_change_24h_native > -15:
-                change_emoji = "⬇️"  # Negative
-            else:
-                change_emoji = "💥"  # Strong negative
-                
-            response_text += f"{change_emoji} **24h Change:** {sign_native}{price_change_24h_native:.1f}% {sign_usd}${price_change_24h_usd:.0f}\n"
+        # 24h change
+        if change_24h != 0:
+            change_emoji = "📈" if change_24h > 0 else "📉"
+            response_text += f"{change_emoji} **24h Change:** {change_24h:+.2f}%\n"
+        else:
+            response_text += f"📊 **24h Change:** 0.0%\n"
         
-        # 24h volume and sales
-        if volume_24h:
-            if volume_24h >= 1000:
-                volume_str = f"{volume_24h/1000:.1f}K ETH"
-            else:
-                volume_str = f"{volume_24h:.2f} ETH"
-            response_text += f"💰 **24h Volume:** {volume_str} ({sales_24h} sales)\n"
+        # Volume
+        if volume_24h_eth > 0:
+            response_text += f"💰 **Volume:** {volume_24h_eth:.2f} ETH (${volume_24h_usd:,.0f})\n"
+        else:
+            response_text += f"💰 **Volume:** 0 ETH (0 sales)\n"
         
-        # Supply and ownership info
-        if total_supply:
-            response_text += f"📦 **Total Supply:** {total_supply:,}\n"
-        if listed_count:
-            response_text += f"🏪 **Listed:** {listed_count:,}\n"
-        if total_owners:
-            response_text += f"👥 **Owners:** {total_owners:,}\n"
+        # Listings
+        if listed_count > 0:
+            response_text += f"🏷️ **Listings:** {listed_count:,}\n"
+        else:
+            response_text += f"🏷️ **Listings:** 0\n"
         
-        response_text += "\n🔄 *Data from NFTPriceFloor API*"
+        # Average sale price
+        if avg_sale_price_eth > 0:
+            response_text += f"📊 **Average Sale:** {avg_sale_price_eth:.4f} ETH (${avg_sale_price_usd:,.2f})\n"
+        else:
+            response_text += f"📊 **Average Sale:** No recent sales\n"
+        
+        # Social media links
+        if website or twitter or discord:
+            response_text += "\n🔗 **Official Links:**\n"
+            if website:
+                response_text += f"• [Website]({website})\n"
+            if twitter:
+                response_text += f"• [Twitter]({twitter})\n"
+            if discord:
+                response_text += f"• [Discord]({discord})\n"
+        
+        response_text += f"\n🔗 [View Chart & Analytics]({collection_link})\n"
+        response_text += f"\n📊 Data from NFTPriceFloor API"
         
         keyboard = [
             [
@@ -2256,9 +2374,9 @@ async def show_collection_actions(query, user_id: int, collection_slug: str) -> 
     """
     try:
         # Get collection info from translations
-        collection_name = get_text(user_id, f'popular_collections.{collection_slug}.name')
-        collection_desc = get_text(user_id, f'popular_collections.{collection_slug}.description')
-        collection_tags = get_text(user_id, f'popular_collections.{collection_slug}.tags')
+        collection_name = get_text(user_id, f'popular_collections.curated_list.{collection_slug}.name')
+        collection_desc = get_text(user_id, f'popular_collections.curated_list.{collection_slug}.description')
+        collection_tags = get_text(user_id, f'popular_collections.curated_list.{collection_slug}.tags')
         
         if not collection_name or collection_name.startswith('popular_collections.'):
             collection_name = collection_slug.replace('_', ' ').title()
