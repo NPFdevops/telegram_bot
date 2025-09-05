@@ -141,7 +141,7 @@
     }
   },
   "top_sales": {
-    "title": "💎 **Top NFT Sales**\n\n",
+    "title": "💎 **[Top NFT Sales](https://nftpricefloor.com/top-nft-sales)**\n\n",
     "loading": "⏳ Loading top sales...",
     "error": "❌ Error fetching top sales data. Please try again later.",
     "no_data": "❌ No sales data available at the moment.",
@@ -149,6 +149,7 @@
     "footer": "🔄 *Data from NFTPriceFloor API*",
     "item": "{rank}. **{collection}** #{token_id}\n   💰 Sale Price: {price} ETH (${usd})\n   🕒 {time_ago}\n",
     "refresh_button": "🔄 Refresh",
+    "refresh": "🔄 Refresh",
     "view_more": "👀 View More Sales"
   },
   "alerts": {
@@ -213,7 +214,8 @@
     "back": "🔙 Back",
     "next": "➡️ Next",
     "previous": "⬅️ Previous",
-    "main_menu": "🏠 Main Menu"
+    "main_menu": "🏠 Main Menu",
+    "back-to-menu": "🏠 Back to Menu"
   },
   "search": {
     "instructions": "🔍 <b>Search Collections</b>\n\nTo search for a specific NFT collection, simply type:\n\n<code>/price [collection name]</code>\n\nFor example:\n• <code>/price bored ape</code>\n• <code>/price cryptopunks</code>\n• <code>/price azuki</code>\n\nThe bot will find the collection and show you the current floor price and market data!"

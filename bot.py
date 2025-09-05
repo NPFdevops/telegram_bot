@@ -753,10 +753,9 @@ async def rankings_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -
             volume_data = stats.get('volume', {})
             count_data = stats.get('count', {})
             sales_temp_native = stats.get('salesTemporalityNative', {})
-            volume_24h = sales_temp_native.get('lowest', {}).get('val24h', 0)
+            volume_24h = sales_temp_native.get('volume', {}).get('val24h', 0)
             sales_24h = count_data.get('val24h', 0)
-            sales_average = sales_temp_native.get('average', {}).get('val24h', 0)
-            sales_count = sales_temp_native.get('count', {}).get('val24h', 0)
+            sales_count_native = sales_temp_native.get('count', {}).get('val24h', 0)
             
             # Create hyperlink for collection name
             collection_link = f"[{name}](https://nftpricefloor.com/{slug}?=tbot)"
@@ -769,14 +768,14 @@ async def rankings_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -
             # Format 24h price change
             if price_change_24h:
                 sign = "+" if price_change_24h >= 0 else ""
-                price_change_display = f"{sign}{price_change_24h:.1f}% {sign}${price_change_24h_usd:.1f}"
+                price_change_display = f"{sign}{price_change_24h:.1f}% (${price_change_24h_usd:.1f})"
             else:
                 price_change_display = "N/A"
             
             # Format 24h volume and sales
             vol_24h = f"{volume_24h:.1f} ETH" if volume_24h else "N/A"
-            sales_count = f"{int(sales_24h)} sales" if sales_24h else "N/A"
-            volume_sales_display = f"{vol_24h} ({sales_count})" if volume_24h and sales_24h else "N/A"
+            sales_count_display = f"{int(sales_24h)} sales" if sales_24h else "0 sales"
+            volume_sales_display = f"{vol_24h} ({sales_count_display})" if volume_24h else "N/A"
             
             response_text += (
                 f"{i}. {collection_link}\n"
@@ -872,14 +871,14 @@ async def rankings_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) 
                 # Format 24h price change
                 if price_change_24h:
                     sign = "+" if price_change_24h >= 0 else ""
-                    price_change_display = f"{sign}{price_change_24h:.1f}% {sign}${price_change_24h_usd:.1f}"
+                    price_change_display = f"{sign}{price_change_24h:.1f}% (${price_change_24h_usd:.1f})"
                 else:
                     price_change_display = "N/A"
                 
                 # Format 24h volume and sales
                 vol_24h = f"{volume_24h:.1f} ETH" if volume_24h else "N/A"
-                sales_count = f"{int(sales_24h)} sales" if sales_24h else "N/A"
-                volume_sales_display = f"{vol_24h} ({sales_count})" if volume_24h and sales_24h else "N/A"
+                sales_count = f"{int(sales_24h)} sales" if sales_24h else "0 sales"
+                volume_sales_display = f"{vol_24h} ({sales_count})" if volume_24h else "N/A"
                 
                 response_text += (
                     f"{i}. {collection_link}\n"
@@ -2069,7 +2068,7 @@ async def rankings_command_from_callback(query, user_id: int) -> None:
             
             # Get 24h volume from salesTemporalityNative
             sales_temp_native = stats.get('salesTemporalityNative', {})
-            volume_24h = sales_temp_native.get('volume', {}).get('val24h', 0)
+            volume_24h = sales_temp_native.get('volume', {}).get('val24h', 0) if isinstance(sales_temp_native.get('volume'), dict) else 0
             
             # Create hyperlink for collection name
             collection_link = f"[{name}](https://nftpricefloor.com/{slug}?=tbot)"
@@ -2329,7 +2328,7 @@ async def setup_alert_from_callback(query, user_id: int, collection_slug: str) -
 # Import user storage module
 from user_storage import (
     get_digest_settings, set_digest_settings, toggle_digest_enabled, 
-    set_digest_time as storage_set_digest_time, init_storage, cleanup_storage,
+    set_digest_time, init_storage, cleanup_storage,
     is_tutorial_completed, start_tutorial, mark_tutorial_step_completed, 
     mark_tutorial_completed, get_user_tutorial_status
 )
@@ -2372,7 +2371,7 @@ async def digest_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
             await show_digest_time_selection(query, user.id)
         elif callback_data.startswith('digest_time_'):
             time_str = callback_data.replace('digest_time_', '')
-            await set_digest_time(query, user.id, time_str)
+            await handle_set_digest_time(query, user.id, time_str)
         elif callback_data == 'digest_preview':
             await show_digest_preview(query, user.id)
         elif callback_data == 'digest_settings':
@@ -2481,12 +2480,12 @@ async def show_digest_time_selection(query, user_id: int) -> None:
         error_message = get_text(user_id, 'errors.general')
         await query.edit_message_text(error_message)
 
-async def set_digest_time(query, user_id: int, time_str: str) -> None:
+async def handle_set_digest_time(query, user_id: int, time_str: str) -> None:
     """
     Set the digest delivery time for the user.
     """
     try:
-        storage_set_digest_time(user_id, time_str)
+        set_digest_time(user_id, time_str)
         
         message = get_text(user_id, 'digest.time_updated', time=time_str)
         await query.edit_message_text(message, parse_mode='Markdown')
